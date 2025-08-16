@@ -36,8 +36,8 @@ TenAspiration/
 - Database (MySQL)
 
 ### Frontend
-- **ReactJs**
-- Tailwind
+- **Javascript** (ReactJs)
+- Tailwindcss
 - Integrasi dengan API backend
 
 ---
