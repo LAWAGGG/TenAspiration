@@ -93,8 +93,6 @@ TenAspiration/
 
 ---
 
----
-
 ## 👨‍💻 Pengembang
 - **LAWAGGG** — [GitHub](https://github.com/LAWAGGG)
 
