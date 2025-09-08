@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { Link, useParams } from "react-router-dom"
-import { Token } from "../../utils/utils"
+import { getToken } from "../../utils/utils"
 
 export default function AspirationDetail() {
     const [asp, setAsp] = useState({})
@@ -18,7 +18,7 @@ export default function AspirationDetail() {
             headers: {
                 "Content-Type": "application/json",
                 "Accept": "application/json",
-                "Authorization": `Bearer ${Token}`,
+                "Authorization": `Bearer ${getToken()}`,
             },
             method: "GET",
         });

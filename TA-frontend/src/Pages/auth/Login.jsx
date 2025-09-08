@@ -39,7 +39,7 @@ export default function Login() {
                     <input
                         type="text"
                         onChange={e => setName(e.target.value)}
-                        placeholder="Username"
+                        placeholder="Name"
                         className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-400"
                     />
                     <input

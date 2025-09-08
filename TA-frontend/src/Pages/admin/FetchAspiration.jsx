@@ -1,16 +1,19 @@
 import { useEffect, useState } from "react";
-import { Token } from "../../utils/utils";
+import { getToken } from "../../utils/utils";
 import { Link, useNavigate } from "react-router-dom";
+import { ThreeDot } from "react-loading-indicators";
 
 export default function FetchAspiration() {
     const [asp, setAsp] = useState([]);
     const [filterTarget, setFilterTarget] = useState("")
+    const [loading, setLoading] = useState(true);
     const navigate = useNavigate()
 
     async function fetchAspiration() {
+        setLoading(true);
         const res = await fetch("http://localhost:8000/api/aspirations", {
             headers: {
-                "Authorization": `Bearer ${Token}`,
+                "Authorization": `Bearer ${getToken()}`,
                 "Content-Type": "application/json",
                 "Accept": "application/json",
             },
@@ -19,13 +22,14 @@ export default function FetchAspiration() {
         const data = await res.json();
         setAsp(Object.values(data.Aspiration));
         console.log(Object.values(data.Aspiration));
+        setLoading(false);
     }
 
     async function handleLogout(e) {
         e.preventDefault();
         const res = await fetch("http://localhost:8000/api/logout", {
             headers: {
-                "Authorization": `Bearer ${Token}`,
+                "Authorization": `Bearer ${getToken()}`,
                 "Content-Type": "application/json",
                 "Accept": "application/json",
             },
@@ -33,7 +37,7 @@ export default function FetchAspiration() {
         });
         const data = await res.json()
 
-        if(res.status == 200){
+        if (res.status == 200) {
             navigate("/")
         }
 
@@ -54,7 +58,10 @@ export default function FetchAspiration() {
                 <h1 className="text-2xl font-bold text-red-700 mb-6 text-center">
                     📜 Daftar Aspirasi
                 </h1>
-                <select onChange={e => setFilterTarget(e.target.value)} className="mb-6 bg-red-100 rounded-xs">
+                <select
+                    onChange={(e) => setFilterTarget(e.target.value)}
+                    className="mb-6 bg-red-100 rounded-xs"
+                >
                     <option value="">ALL</option>
                     <option value="MPK">MPK</option>
                     <option value="OSIS">OSIS</option>
@@ -63,14 +70,30 @@ export default function FetchAspiration() {
             </div>
 
             <div className="flex flex-col gap-4 max-w-2xl mx-auto">
-                {
-
+                {loading ? ( 
+                    <div className="flex justify-center items-center min-h-[60vh]">
+                        <ThreeDot color="#ff4747" size="medium" text="" textColor="#000000" />
+                    </div>
+                ) : filteredAsp.length > 0 ? (
                     filteredAsp.map((item, i) => (
-                        <Link to={`/aspirations/${item.id}`}
+                        <Link
+                            to={`/aspirations/${item.id}`}
                             key={i}
-                            className={`bg-white rounded-xl shadow-md p-5 border-l-8 hover:shadow-lg transition-shadow ${item.to == "MPK" ? "border-red-600" : item.to== "OSIS"?"border-blue-500" : "border-gray-400"} `}
+                            className={`bg-white rounded-xl shadow-md p-5 border-l-8 hover:shadow-lg transition-shadow ${item.to == "MPK"
+                                ? "border-red-600"
+                                : item.to == "OSIS"
+                                    ? "border-blue-500"
+                                    : "border-gray-400"
+                                } `}
                         >
-                            <h3 className={`text-lg font-semibold ${item.to == "MPK" ? 'text-red-700' : item.to == "OSIS" ? "text-blue-700" : "text-black"}`}>
+                            <h3
+                                className={`text-lg font-semibold ${item.to == "MPK"
+                                    ? "text-red-700"
+                                    : item.to == "OSIS"
+                                        ? "text-blue-700"
+                                        : "text-black"
+                                    }`}
+                            >
                                 🎯 {item.to}
                             </h3>
                             <p className="text-gray-700 mt-1">{item.message}</p>
@@ -78,15 +101,19 @@ export default function FetchAspiration() {
                                 <p className="text-xs text-gray-500 mt-3">
                                     {new Date(item.date).toLocaleString("id-ID", {
                                         dateStyle: "long",
-                                        timeStyle: "short"
+                                        timeStyle: "short",
                                     })}
                                 </p>
                             )}
                         </Link>
-                    ))}
+                    ))
+                ) : (
+                    <p className="text-center text-gray-500">🙁 Tidak ada aspirasi.</p>
+                )}
             </div>
+
             <div className="fixed right-5 bottom-5 bg-red-500 p-3 rounded-xl text-white">
-                    <button onClick={e=>handleLogout(e)}>Logout</button>
+                <button onClick={(e) => handleLogout(e)}>Logout</button>
             </div>
         </div>
     );
