@@ -100,6 +100,16 @@ class AspirationController extends Controller
      */
     public function destroy(Aspiration $aspiration)
     {
-        //
+        if(!$aspiration){
+            return response()->json([
+                "message"=>"aspiration not found"
+            ],404);
+        }
+
+        $aspiration->delete();
+
+        return response()->json([
+            "message"=>"aspiration deleted"
+        ]);
     }
 }

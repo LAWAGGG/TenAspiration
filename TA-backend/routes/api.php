@@ -14,6 +14,7 @@ Route::post("/login", [AuthController::class, "login"]);
 Route::middleware("auth:sanctum","admin" )->group(function(){
     Route::get("/aspirations", [AspirationController::class, "index"]);
     Route::get("/aspirations/{aspiration}", [AspirationController::class, "show"]);
+    Route::delete("/aspirations/{aspiration}", [AspirationController::class, "destroy"]);
     Route::post("/logout", [AuthController::class, "logout"]);
 });
 

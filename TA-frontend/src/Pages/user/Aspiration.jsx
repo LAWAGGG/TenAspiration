@@ -5,7 +5,7 @@ export default function Aspiration() {
     const [to, setTo] = useState("");
     const [showModal, setShowModal] = useState(false);
     const [hint, setHint] = useState(false);
-    const badWords = ["anjing", "bangsat", "goblok", "tai", "kontol", "bego", "anj", "anjay", "anjir", "a n j i n g", "tolol", "monyet", "babi"]
+    const badWords = ["anjing", "bangsat", "goblok", "tai", "kontol", "bego", "anj", "anjay", "anjir", "a n j i n g", "tolol", "monyet", "babi", "memek", "pepek", "puki", "jancuk", "jancok", "kampret", "kntl", "kntol", "kntl", "kntol", "pantek", "panteq", "pantek", "panteq", "bajingan", "fuck", "shit", "asshole"];
     const containBadWords = badWords.some(words =>
         message.toLowerCase().includes(words)
     );
@@ -33,16 +33,12 @@ export default function Aspiration() {
         console.log(data.message);
 
         if (res.status === 200) {
-            setShowModal(true); // munculin modal
+            setShowModal(true);
         }
     }
 
     function handleOk() {
         window.location.reload();
-    }
-
-    function showHint() {
-
     }
 
     return (
