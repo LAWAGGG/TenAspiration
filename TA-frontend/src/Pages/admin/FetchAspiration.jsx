@@ -38,25 +38,6 @@ export default function FetchAspiration() {
         fetchAspiration()
     }
 
-    async function handleLogout(e) {
-        e.preventDefault();
-        const res = await fetch("http://localhost:8000/api/logout", {
-            headers: {
-                "Authorization": `Bearer ${getToken()}`,
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-            },
-            method: "POST",
-        });
-        const data = await res.json()
-
-        if (res.status == 200) {
-            navigate("/")
-        }
-
-        console.log(data)
-    }
-
     useEffect(() => {
         fetchAspiration();
     }, []);
@@ -133,7 +114,7 @@ export default function FetchAspiration() {
 
                             {/* Link ke detail */}
                             <Link
-                                to={`/aspirations/${item.id}`}
+                                to={`/home/aspirations/${item.id}`}
                                 className="block text-blue-600 mt-3 text-sm hover:underline"
                             >
                                 Lihat Detail →
@@ -145,8 +126,9 @@ export default function FetchAspiration() {
                 )}
             </div>
 
-            <div className="fixed right-5 bottom-5 bg-red-500 p-3 rounded-xl text-white cursor-pointer hover:bg-red-600">
-                <button className="cursor-pointer hover:bg-red-600" onClick={(e) => handleLogout(e)}>Logout</button>
+
+            <div className="fixed right-5 bottom-5 bg-red-500 p-3 rounded-xl text-white">
+                <Link className="" to="/home">Go back </Link>
             </div>
         </div>
     );

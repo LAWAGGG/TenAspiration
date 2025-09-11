@@ -16,12 +16,12 @@ class AspirationController extends Controller
         $asp = Aspiration::get()->sortByDesc("created_at");
 
         return response()->json([
-            "Aspiration"=>collect($asp)->map(function($asp){
-                return[
-                    "id"=>$asp->id,
-                    "message"=>$asp->message,
-                    "to"=>$asp->to,
-                    "date"=>$asp->created_at
+            "Aspiration" => collect($asp)->map(function ($asp) {
+                return [
+                    "id" => $asp->id,
+                    "message" => $asp->message,
+                    "to" => $asp->to,
+                    "date" => $asp->created_at
                 ];
             })
         ]);
@@ -40,20 +40,20 @@ class AspirationController extends Controller
      */
     public function store(Request $request)
     {
-        $val = Validator::make($request->all(),[
-            "message"=>"required",
-            "to"=>"required",
+        $val = Validator::make($request->all(), [
+            "message" => "required",
+            "to" => "required",
         ]);
 
-        if($val->fails()){
+        if ($val->fails()) {
             return response()->json([
-                "message"=>"invalid fields"
-            ],422);
+                "message" => "invalid fields"
+            ], 422);
         }
 
-       $message =  Aspiration::create([
-            "message"=>$request->message,
-            "to"=>$request->to
+        $message =  Aspiration::create([
+            "message" => $request->message,
+            "to" => $request->to
         ]);
 
         return response()->json([
@@ -64,20 +64,20 @@ class AspirationController extends Controller
     /**
      * Display the specified resource.
      */
-        public function show($id)
-        {
-            $aspiration = Aspiration::find($id);
-            
-            if(!$aspiration){
-                return response()->json([
-                    "message"=>"aspiration not found"
-                ],404);
-            }
+    public function show($id)
+    {
+        $aspiration = Aspiration::find($id);
 
+        if (!$aspiration) {
             return response()->json([
-                "Aspiration"=>$aspiration
-            ]);
+                "message" => "aspiration not found"
+            ], 404);
         }
+
+        return response()->json([
+            "Aspiration" => $aspiration
+        ]);
+    }
 
     /**
      * Show the form for editing the specified resource.
@@ -100,16 +100,39 @@ class AspirationController extends Controller
      */
     public function destroy(Aspiration $aspiration)
     {
-        if(!$aspiration){
+        if (!$aspiration) {
             return response()->json([
-                "message"=>"aspiration not found"
-            ],404);
+                "message" => "aspiration not found"
+            ], 404);
         }
 
         $aspiration->delete();
 
         return response()->json([
-            "message"=>"aspiration deleted"
+            "message" => "aspiration deleted"
+        ]);
+    }
+
+    public function StoreEvent(Request $request)
+    {
+        $val = Validator::make($request->all(), [
+            "message" => "required",
+            "to" => "required",
+        ]);
+
+        if ($val->fails()) {
+            return response()->json([
+                "message" => "invalid fields"
+            ], 422);
+        }
+
+        $message =  Aspiration::create([
+            "message" => $request->message,
+            "to" => $request->to
+        ]);
+
+        return response()->json([
+            "message" => $message
         ]);
     }
 }

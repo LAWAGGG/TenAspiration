@@ -62,7 +62,7 @@ export default function AspirationDetail() {
                 </div>
             </div>
             <div className="fixed right-5 bottom-5 bg-red-500 p-3 rounded-xl text-white">
-                <Link className="" to="/aspirations">Go back </Link>
+                <Link className="" to="/home/aspirations">Go back </Link>
             </div>
         </div>
     );

@@ -24,7 +24,7 @@ export default function Login() {
 
         if (res.status === 200) {
             setToken(data.token);
-            navigate("/aspirations");
+            navigate("/home");
         } else {
             alert("Input incorrect");
             window.location.reload();
