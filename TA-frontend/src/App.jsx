@@ -20,7 +20,7 @@ function App() {
 
         {/* Route For Aspiration Form (Event and daily) */}
         <Route path="/" element={<Aspiration></Aspiration>}></Route>
-        <Route path='/aspirations/event' element={<AspirationEvent></AspirationEvent>}></Route>
+        <Route path='/event' element={<AspirationEvent></AspirationEvent>}></Route>
 
         {/* Route For Daily Aspirations */}
         <Route path="/home/aspirations" element={<FetchAspiration></FetchAspiration>}></Route>

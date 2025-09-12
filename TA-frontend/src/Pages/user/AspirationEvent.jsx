@@ -68,11 +68,11 @@ export default function AspirationEvent() {
     }, [])
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-red-50 via-white to-red-50 p-4">
-            <div className="card border bg-white shadow-2xl rounded-3xl p-8 w-full max-w-md  border-red-500 relative overflow-hidden">
+        <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 p-4">
+            <div className="card border bg-white shadow-2xl rounded-3xl p-8 w-full max-w-md  border-blue-500 relative overflow-hidden">
 
-                <div className="absolute -top-20 -right-20 w-40 h-40 rounded-full bg-red-100 opacity-30"></div>
-                <div className="absolute -bottom-16 -left-16 w-32 h-32 rounded-full bg-red-100 opacity-30"></div>
+                <div className="absolute -top-20 -right-20 w-40 h-40 rounded-full bg-blue-100 opacity-30"></div>
+                <div className="absolute -bottom-16 -left-16 w-32 h-32 rounded-full bg-blue-100 opacity-30"></div>
 
                 <div className="relative z-10">
                     <div className="flex justify-center mb-4">
@@ -80,17 +80,17 @@ export default function AspirationEvent() {
                     </div>
 
                     <h1 className="text-3xl font-bold text-gray-800 text-center mb-3">
-                        <span className="text-red-600">Ten</span>Aspiration
+                        <span className="text-blue-600">Ten</span>Aspiration
                     </h1>
                     <p className="text-gray-600 text-center mb-6 text-sm px-4">
-                        Sampaikan aspirasimu secara <span className="font-semibold text-red-500">anonim</span> kepada MPK, OSIS, atau Sekolah.
+                        Sampaikan aspirasimu secara <span className="font-semibold text-blue-500">anonim</span> kepada MPK, OSIS, atau Sekolah.
                     </p>
 
-                    <form onSubmit={handleAspiration} className="space-y-5">
+                    <form onSubmit={handleAspiration} className="space-y-4">
                         {/* Pesan */}
                         <div>
                             <label className=" text-sm font-medium text-gray-700 mb-2 flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                                 </svg>
                                 Pesan Aspirasi
@@ -99,21 +99,21 @@ export default function AspirationEvent() {
                                 onChange={(e) => setMessage(e.target.value)}
                                 placeholder="Tulis aspirasi kamu di sini..."
                                 rows="3"
-                                className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-300 focus:border-red-300 transition"
+                                className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300 transition"
                             />
                         </div>
 
                         {/* Event */}
                         <div>
                             <label className=" text-sm font-medium text-gray-700 mb-2 flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                                 </svg>
                                 Event
                             </label>
                             <select
                                 onChange={(e) => setEventId(e.target.value)}
-                                className="w-full border border-gray-300 rounded-lg p-3 bg-white focus:outline-none focus:ring-2 focus:ring-red-300 focus:border-red-300 transition appearance-none">
+                                className="w-full border border-gray-300 rounded-lg p-3 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300 transition appearance-none">
                                 <option value="">-- Pilih Event --</option>
                                 {
                                     events.map((item, i) => (
@@ -126,14 +126,14 @@ export default function AspirationEvent() {
                         {/* Tujuan */}
                         <div>
                             <label className=" text-sm font-medium text-gray-700 mb-2 flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                                 </svg>
                                 Tujuan (ke)
                             </label>
                             <select
                                 onChange={(e) => setTo(e.target.value)}
-                                className="w-full border border-gray-300 rounded-lg p-3 bg-white focus:outline-none focus:ring-2 focus:ring-red-300 focus:border-red-300 transition appearance-none">
+                                className="w-full border border-gray-300 rounded-lg p-3 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300 transition appearance-none">
                                 <option value="">-- Pilih Tujuan --</option>
                                 {
                                     divisions.map((div, i) => (
@@ -147,7 +147,7 @@ export default function AspirationEvent() {
                                     placeholder="Tuliskan tujuan (ke) lain..."
                                     value={other_to}
                                     onChange={(e) => setOtherTo(e.target.value)}
-                                    className="mt-2 w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-300 focus:border-red-300 transition"
+                                    className="mt-2 w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300 transition"
                                 />
                             )}
                         </div>
@@ -157,7 +157,7 @@ export default function AspirationEvent() {
                             type="submit"
                             disabled={!(message && to && eventId) || containBadWords}
                             className={`w-full py-3 rounded-lg font-semibold shadow-md transition-all duration-200 ${message && to && eventId && !containBadWords
-                                ? "bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white"
+                                ? "bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white"
                                 : "bg-gray-200 text-white cursor-not-allowed"
                                 }`}>
                             <div className="flex items-center justify-center">
@@ -181,7 +181,7 @@ export default function AspirationEvent() {
                     {/* Modal sukses */}
                     {showModal && (
                         <div className="fixed inset-0 bg-opacity-75 flex items-center justify-center z-50 backdrop-blur-sm">
-                            <div className="bg-white rounded-xl p-6 shadow-2xl text-center max-w-sm w-full border-t-4 border-red-500 animate-pop">
+                            <div className="bg-white rounded-xl p-6 shadow-2xl text-center max-w-sm w-full border-t-4 border-blue-500 animate-pop">
                                 <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
                                     <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -191,7 +191,7 @@ export default function AspirationEvent() {
                                 <p className="text-gray-600 mb-4">Terima kasih telah menyampaikan aspirasimu.</p>
                                 <button
                                     onClick={() => window.location.reload()}
-                                    className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition focus:outline-none focus:ring-2 focus:ring-red-300 focus:ring-offset-2">
+                                    className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-offset-2">
                                     Mengerti
                                 </button>
                             </div>
