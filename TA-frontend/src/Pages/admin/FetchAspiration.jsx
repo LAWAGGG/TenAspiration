@@ -7,6 +7,8 @@ export default function FetchAspiration() {
     const [asp, setAsp] = useState([]);
     const [filterTarget, setFilterTarget] = useState("");
     const [loading, setLoading] = useState(true);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deleteId, setDeleteId] = useState(null);
 
     async function fetchAspiration() {
         setLoading(true);
@@ -23,8 +25,14 @@ export default function FetchAspiration() {
         setLoading(false);
     }
 
-    async function handleDelete(id) {
-        await fetch(`http://localhost:8000/api/aspirations/${id}`, {
+    function confirmDelete(id) {
+        setDeleteId(id);
+        setShowDeleteModal(true);
+    }
+
+    async function handleDelete() {
+        if (!deleteId) return;
+        await fetch(`http://localhost:8000/api/aspirations/${deleteId}`, {
             method: "DELETE",
             headers: {
                 "Accept": "application/json",
@@ -32,6 +40,8 @@ export default function FetchAspiration() {
                 "Content-Type": "application/json"
             }
         });
+        setShowDeleteModal(false);
+        setDeleteId(null);
         fetchAspiration();
     }
 
@@ -136,7 +146,7 @@ export default function FetchAspiration() {
                                 </div>
 
                                 <button
-                                    onClick={() => handleDelete(item.id)}
+                                    onClick={() => confirmDelete(item.id)}
                                     className="ml-4 text-gray-500 px-3 py-1 rounded-lg text-sm hover:bg-gray-200 cursor-pointer"
                                 >
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-trash3-fill" viewBox="0 0 16 16">
@@ -157,6 +167,30 @@ export default function FetchAspiration() {
                     <p className="text-center text-gray-500">🙁 Tidak ada aspirasi.</p>
                 )}
             </div>
+
+            {/* Delete Confirmation Modal */}
+            {showDeleteModal && (
+                <div className="fixed inset-0 bg-opacity-75 flex justify-center items-center z-50 backdrop-blur-sm">
+                    <div className="bg-white rounded-xl shadow-lg p-6 w-96 text-center">
+                        <h2 className="text-lg font-semibold text-gray-800 mb-4">Konfirmasi Hapus</h2>
+                        <p className="text-gray-600 mb-6">Apakah kamu yakin ingin menghapus aspirasi ini? Tindakan ini tidak bisa dibatalkan.</p>
+                        <div className="flex justify-center gap-4">
+                            <button
+                                onClick={() => setShowDeleteModal(false)}
+                                className="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                onClick={handleDelete}
+                                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+                            >
+                                Ya, Hapus
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Back button */}
             <div className="fixed right-5 bottom-5 bg-red-500 p-3 rounded-xl text-white">

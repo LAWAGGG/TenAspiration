@@ -80,7 +80,7 @@ export default function AspirationEvent() {
                     </div>
 
                     <h1 className="text-3xl font-bold text-gray-800 text-center mb-3">
-                        <span className="text-blue-600">Ten</span>Aspiration
+                        Ten Aspiration <span className="text-blue-600">Event</span>
                     </h1>
                     <p className="text-gray-600 text-center mb-6 text-sm px-4">
                         Sampaikan aspirasimu secara <span className="font-semibold text-blue-500">anonim</span> kepada Event yang sedang diselenggarakan.
