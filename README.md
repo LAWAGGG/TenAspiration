@@ -26,6 +26,7 @@ TenAspiration/
 - **Daftar Aspirasi** — Menampilkan semua aspirasi yang sudah terkumpul.
 - **Manajemen Backend** — Mendukung API untuk memproses data aspirasi.
 - **Struktur Modular** — Backend dan frontend terpisah untuk kemudahan pengembangan.
+- **Admin Dashboard** — Pengaturan data data aspirasi untuk admin.
 
 ---
 
