@@ -83,7 +83,7 @@ export default function AspirationEvent() {
                         <span className="text-blue-600">Ten</span>Aspiration
                     </h1>
                     <p className="text-gray-600 text-center mb-6 text-sm px-4">
-                        Sampaikan aspirasimu secara <span className="font-semibold text-blue-500">anonim</span> kepada MPK, OSIS, atau Sekolah.
+                        Sampaikan aspirasimu secara <span className="font-semibold text-blue-500">anonim</span> kepada Event yang sedang diselenggarakan.
                     </p>
 
                     <form onSubmit={handleAspiration} className="space-y-4">
@@ -98,7 +98,7 @@ export default function AspirationEvent() {
                             <textarea
                                 onChange={(e) => setMessage(e.target.value)}
                                 placeholder="Tulis aspirasi kamu di sini..."
-                                rows="3"
+                                rows="1"
                                 className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300 transition"
                             />
                         </div>
@@ -204,7 +204,7 @@ export default function AspirationEvent() {
                             <div className="bg-white rounded-xl p-6 shadow-2xl text-center max-w-sm w-full border-t-4 border-blue-500 animate-pop">
                                 <h2 className="text-xl font-bold text-gray-800 mb-2">Panduan</h2>
                                 <p className="text-gray-600 mb-4 text-sm">
-                                    1. Pilih tujuan aspirasi (MPK, OSIS, atau SEKOLAH).<br />
+                                    1. Pilih tujuan aspirasi (Divisi jobdesk).<br />
                                     2. Tulis pesan aspirasi kalian di kolom "Pesan aspirasi".<br />
                                     3. Menggunakan bahasa yang baik dan benar.<br />
                                     4. Klik tombol "Kirim Aspirasi".

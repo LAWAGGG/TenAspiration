@@ -7,14 +7,18 @@ use App\Http\Controllers\EventController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {   
+Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
 Route::post("/login", [AuthController::class, "login"]);
 
 //Admin Only
-Route::middleware("auth:sanctum","admin" )->group(function(){
+Route::middleware("auth:sanctum", "admin")->group(function () {
+
+    //Export CSV by Daily
+    Route::get("/aspirations/csv", [AspirationController::class, "exportCsv"]);
+
     //Aspiration (daily)
     Route::get("/aspirations", [AspirationController::class, "index"]);
     Route::get("/aspirations/{aspiration}", [AspirationController::class, "show"]);
@@ -26,11 +30,14 @@ Route::middleware("auth:sanctum","admin" )->group(function(){
     Route::get("/aspiration/events/event/{eventId}", [AspirationEventController::class, "showAspirationByEvent"]);
     Route::delete("/aspiration/events/{aspirationEvent}", [AspirationEventController::class, "destroy"]);
 
+    //Export CSV by Event
+    Route::get("/aspiration/events/event/{eventId}/csv", [AspirationEventController::class, "exportCsv"]);
+
     //Event Management
     Route::post("/events", [EventController::class, "store"]);
     Route::put("/events/{event}", [EventController::class, "update"]);
     Route::delete("/events/{event}", [EventController::class, "destroy"]);
-    
+
     //logout user
     Route::post("/logout", [AuthController::class, "logout"]);
 });

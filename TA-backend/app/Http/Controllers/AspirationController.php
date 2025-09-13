@@ -135,4 +135,34 @@ class AspirationController extends Controller
             "message" => $message
         ]);
     }
+
+    public function exportCsv()
+    {
+        $aspirations = Aspiration::get();
+
+        $headers = [
+            "Content-Type" => "text/csv",
+            "Content-Disposition" => "inline; filename=aspirations.csv",
+        ];
+
+        $columns = ["ID", "Message", "To", "Date"];
+
+        return response()->stream(function () use ($aspirations, $columns) {
+            $handle = fopen("php://output", "w");
+
+
+            fputcsv($handle, $columns, ";");
+
+            foreach ($aspirations as $asp) {
+                fputcsv($handle, [
+                    $asp->id,
+                    $asp->message,
+                    $asp->to,
+                    $asp->created_at,
+                ], ";");
+            }
+
+            fclose($handle);
+        }, 200, $headers);
+    }
 }

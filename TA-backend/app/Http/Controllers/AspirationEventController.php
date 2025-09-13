@@ -142,4 +142,35 @@ class AspirationEventController extends Controller
             })
         ]);
     }
+
+    public function exportCsv($eventId)
+    {
+        $aspirations = AspirationEvent::where("event_id", $eventId)->get();
+
+        $headers = [
+            "Content-Type" => "text/csv",
+            "Content-Disposition" => "inline; filename=aspirations_event_$eventId.csv",
+        ];
+
+        $columns = ["ID", "Message", "To","Other To", "Date"];
+
+        return response()->stream(function () use ($aspirations, $columns) {
+            $handle = fopen("php://output", "w");
+
+
+            fputcsv($handle, $columns, ";");
+
+            foreach ($aspirations as $asp) {
+                fputcsv($handle, [
+                    $asp->id,
+                    $asp->message,
+                    $asp->to,
+                    $asp->other_to ?? "-",
+                    $asp->created_at,
+                ], ";");
+            }
+
+            fclose($handle);
+        }, 200, $headers);
+    }
 }

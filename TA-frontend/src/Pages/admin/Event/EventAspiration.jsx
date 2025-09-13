@@ -23,6 +23,27 @@ export default function EventAspiration() {
         setLoading(false)
     }
 
+    async function handleCsvAspiration() {
+        const res = await fetch(`http://localhost:8000/api/aspiration/events/event/${params.id}/csv`, {
+            method: 'GET',
+            headers: {
+                "Accept": "text/csv",
+                "Authorization": `Bearer ${getToken()}`
+            }
+        })
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `aspiration-event-${params.id}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+
+        window.URL.revokeObjectURL(url);
+    }
+
     useEffect(() => {
         fetchAspirationEvent()
     }, [])
@@ -31,8 +52,8 @@ export default function EventAspiration() {
         return (
             <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-red-50 via-white to-red-100 p-4">
                 <div className="flex justify-center items-center min-h-[60vh]">
-                        <ThreeDot color="#ff4747" size="medium" text="" textColor="#000000" />
-                    </div>
+                    <ThreeDot color="#ff4747" size="medium" text="" textColor="#000000" />
+                </div>
             </div>
         )
     }
@@ -40,11 +61,17 @@ export default function EventAspiration() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-100 p-4 md:p-8">
             <div className="max-w-4xl mx-auto">
-                <div className="mb-8 text-center">
+                <div className="mb-8 text-center flex flex-col gap-4">
                     <h1 className="text-3xl font-bold text-gray-800 mb-2">
                         Aspirasi <span className="text-red-600">Event</span>
                     </h1>
                     <p className="text-gray-600">Daftar aspirasi yang telah dikumpulkan</p>
+                    <button
+                        onClick={handleCsvAspiration}
+                        className="px-4 py-2 bg-green-500 text-white rounded-lg shadow hover:bg-green-600 transition"
+                    >
+                        📥 Export CSV
+                    </button>
                 </div>
 
                 {event.length === 0 ? (

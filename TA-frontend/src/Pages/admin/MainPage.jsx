@@ -10,6 +10,9 @@ export default function MainPage() {
     const [description, setDescription] = useState("");
     const [date, setDate] = useState("");
     const [showModal, setShowModal] = useState(false);
+    const [deleteModal, setDeleteModal] = useState(false);
+    const [selectedId, setSelectedId] = useState(null);
+
     const navigate = useNavigate();
 
     async function fetchEvent() {
@@ -54,8 +57,8 @@ export default function MainPage() {
         console.log(data.event)
     }
 
-    async function handleDelete(id) {
-        await fetch(`http://localhost:8000/api/events/${id}`, {
+    async function confirmDelete() {
+        await fetch(`http://localhost:8000/api/events/${selectedId}`, {
             method: "DELETE",
             headers: {
                 "Accept": "application/json",
@@ -63,6 +66,8 @@ export default function MainPage() {
                 "Content-Type": "application/json"
             }
         });
+        setDeleteModal(false);
+        setSelectedId(null);
         fetchEvent();
     }
 
@@ -134,18 +139,25 @@ export default function MainPage() {
                                     <p className="text-gray-700 mb-4">
                                         {item.description || "Tidak ada deskripsi"}
                                     </p>
-                                    <Link
-                                        to={`/home/aspirations/events/${item.id}`}
-                                        className="inline-block px-4 py-1 bg-red-200 text-gray-700 rounded-lg hover:bg-red-300 transition"
-                                    >
-                                        Lihat Aspirasi →
-                                    </Link>
-                                    <button
-                                        onClick={() => handleDelete(item.id)}
-                                        className="ml-4 text-gray-500 px-3 py-1 rounded-lg text-sm hover:bg-gray-200 cursor-pointer"
-                                    >
-                                        🗑
-                                    </button>
+                                    <div className="flex justify-between">
+                                        <Link
+                                            to={`/home/aspirations/events/${item.id}`}
+                                            className="inline-block px-4 py-1 bg-red-200 text-gray-700 rounded-lg hover:bg-red-300 transition"
+                                        >
+                                            Lihat Aspirasi →
+                                        </Link>
+                                        <button
+                                            onClick={() => {
+                                                setSelectedId(item.id);
+                                                setDeleteModal(true);
+                                            }}
+                                            className="ml-4 text-gray-500 px-3 py-1 rounded-lg text-sm hover:bg-gray-200 cursor-pointer"
+                                        >
+                                            🗑
+                                        </button>
+
+                                    </div>
+
                                 </div>
                             ))}
                         </div>
@@ -155,7 +167,7 @@ export default function MainPage() {
                         </p>
                     )}
 
-                    {/* Modal */}
+                    {/* Modal Tambah Event */}
                     {showModal && (
                         <div className="fixed inset-0 bg-opacity-75 flex justify-center items-center z-50 backdrop-blur-sm">
                             <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-lg">
@@ -197,6 +209,32 @@ export default function MainPage() {
                                         </button>
                                     </div>
                                 </form>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Modal Konfirmasi Delete */}
+                    {deleteModal && (
+                        <div className="fixed inset-0 bg-opacity-75 flex justify-center items-center z-50 backdrop-blur-sm">
+                            <div className="bg-white rounded-xl p-6 w-full max-w-sm shadow-lg">
+                                <h2 className="text-lg font-bold text-red-600 mb-4">Konfirmasi</h2>
+                                <p className="text-gray-700 mb-6">
+                                    Apakah Anda yakin ingin menghapus event ini?
+                                </p>
+                                <div className="flex justify-end gap-3">
+                                    <button
+                                        onClick={() => setDeleteModal(false)}
+                                        className="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400"
+                                    >
+                                        Batal
+                                    </button>
+                                    <button
+                                        onClick={confirmDelete}
+                                        className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+                                    >
+                                        Hapus
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     )}
