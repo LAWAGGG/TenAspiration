@@ -74,6 +74,16 @@ TenAspiration/
 
 ---
 
+## 📸 Tampilan Web
+### Form Aspirasi Harian
+![Form Aspirasi Harian](https://res.cloudinary.com/dnm8qczle/image/upload/v1757747659/Screenshot_2025-09-13_140559_u49qso.png)
+
+### Form Aspirasi Event
+![Form Aspirasi Event](https://res.cloudinary.com/dnm8qczle/image/upload/v1757747659/Screenshot_2025-09-13_140544_dly8ir.png)
+
+
+---
+
 ## 🤝 Kontribusi
 
 1. Fork repository ini.
