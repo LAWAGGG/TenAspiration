@@ -26,6 +26,7 @@ TenAspiration/
 - **Daftar Aspirasi** — Menampilkan semua aspirasi yang sudah terkumpul.
 - **Manajemen Backend** — Mendukung API untuk memproses data aspirasi.
 - **Struktur Modular** — Backend dan frontend terpisah untuk kemudahan pengembangan.
+- **Admin Dashboard** — Pengaturan data data aspirasi untuk admin.
 
 ---
 
@@ -71,6 +72,16 @@ TenAspiration/
 4. **Akses Aplikasi**
    - Backend API: `http://localhost:8000`
    - Frontend UI: `http://localhost:5173`
+
+---
+
+## 📸 Tampilan Web
+### Form Aspirasi Harian
+![Form Aspirasi Harian](https://res.cloudinary.com/dnm8qczle/image/upload/v1757747659/Screenshot_2025-09-13_140559_u49qso.png)
+
+### Form Aspirasi Event
+![Form Aspirasi Event](https://res.cloudinary.com/dnm8qczle/image/upload/v1757747659/Screenshot_2025-09-13_140544_dly8ir.png)
+
 
 ---
 
