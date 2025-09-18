@@ -56,6 +56,7 @@ TenAspiration/
    cd TA-backend
    composer install
    cp .env.example .env
+   Note : ganti nama database terlebih dahulu di .env
    php artisan key:generate
    # Konfigurasi koneksi database di file .env
    php artisan migrate
