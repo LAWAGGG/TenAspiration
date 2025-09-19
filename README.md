@@ -59,6 +59,7 @@ TenAspiration/
    Note : ganti nama database terlebih dahulu di .env
    php artisan key:generate
    # Konfigurasi koneksi database di file .env
+   php artisan dub:seed
    php artisan migrate
    php artisan serve
    ```
