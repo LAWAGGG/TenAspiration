@@ -169,7 +169,7 @@ export default function MainPage() {
 
                     {/* Modal Tambah Event */}
                     {showModal && (
-                        <div className="fixed inset-0 bg-opacity-75 flex justify-center items-center z-50 backdrop-blur-sm">
+                        <div className="fixed inset-0 p-5 bg-opacity-75 flex justify-center items-center z-50 backdrop-blur-sm">
                             <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-lg">
                                 <h2 className="text-xl font-bold text-red-600 mb-4">
                                     Tambah Event Baru

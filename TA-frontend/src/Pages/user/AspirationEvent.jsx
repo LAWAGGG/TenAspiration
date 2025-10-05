@@ -180,7 +180,7 @@ export default function AspirationEvent() {
 
                     {/* Modal sukses */}
                     {showModal && (
-                        <div className="fixed inset-0 bg-opacity-75 flex items-center justify-center z-50 backdrop-blur-sm">
+                        <div className="fixed inset-0 p-5 bg-opacity-75 flex items-center justify-center z-50 backdrop-blur-sm">
                             <div className="bg-white rounded-xl p-6 shadow-2xl text-center max-w-sm w-full border-t-4 border-blue-500 animate-pop">
                                 <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
                                     <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -200,7 +200,7 @@ export default function AspirationEvent() {
 
                     {/* Modal panduan */}
                     {hint && (
-                        <div className="fixed inset-0 bg-opacity-75 flex items-center justify-center z-50 backdrop-blur-sm">
+                        <div className="fixed inset-0 p-5 bg-opacity-75 flex items-center justify-center z-50 backdrop-blur-sm">
                             <div className="bg-white rounded-xl p-6 shadow-2xl text-center max-w-sm w-full border-t-4 border-blue-500 animate-pop">
                                 <h2 className="text-xl font-bold text-gray-800 mb-2">Panduan</h2>
                                 <p className="text-gray-600 mb-4 text-sm">
