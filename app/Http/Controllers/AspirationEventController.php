@@ -29,6 +29,45 @@ class AspirationEventController extends Controller
             "other_to" => "nullable|string|max:255",
         ]);
 
+        $badWords = [
+            "anjing",
+            "bangsat",
+            "goblok",
+            "tai",
+            "kontol",
+            "bego",
+            "anj",
+            "anjay",
+            "anjir",
+            "a n j i n g",
+            "tolol",
+            "monyet",
+            "babi",
+            "memek",
+            "pepek",
+            "puki",
+            "jancuk",
+            "jancok",
+            "kampret",
+            "kntl",
+            "kntol",
+            "kntl",
+            "kntol",
+            "pantek",
+            "panteq",
+            "pantek",
+            "panteq",
+            "bajingan",
+            "fuck",
+            "shit",
+            "asshole"
+        ];
+        foreach ($badWords as $word) {
+            if (stripos($request->message, $word) !== false) {
+                return back()->withErrors(['message' => 'Pesan mengandung kata tidak pantas!'])->withInput();
+            }
+        }
+
         AspirationEvent::create([
             "message" => $request->message,
             "to" => $request->to,
@@ -36,7 +75,7 @@ class AspirationEventController extends Controller
             "other_to" => $request->other_to,
         ]);
 
-        return redirect()->route('aspiration_events.index')->with('success', 'Aspirasi event berhasil dibuat!');
+        return redirect()->back()->with('success', 'Aspirasi event berhasil dikirim!');
     }
 
 
@@ -91,14 +130,19 @@ class AspirationEventController extends Controller
         return view('aspiration_events.by_event', compact('aspirations', 'eventId'));
     }
 
-   
+
     public function exportCsv($eventId)
     {
-        $aspirations = AspirationEvent::where("event_id", $eventId)->get();
+        $aspirations = AspirationEvent::where("event_id", $eventId)->with(['event'])->get();
+        $eventName = $aspirations->first()->event->name;
+
+        if ($aspirations->isEmpty()) {
+            return redirect()->back()->with('error', 'Belum ada aspirasi untuk event ini.');
+        }
 
         $headers = [
             "Content-Type" => "text/csv",
-            "Content-Disposition" => "inline; filename=aspirations_event_$eventId.csv",
+            "Content-Disposition" => "inline; filename=aspirations_event_{$eventName}.csv",
         ];
 
         $columns = ["ID", "Message", "To", "Other To", "Date"];

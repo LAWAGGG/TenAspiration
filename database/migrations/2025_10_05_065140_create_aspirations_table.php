@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('aspirations', function (Blueprint $table) {
             $table->id();
             $table->text("message");
-            $table->enum("to", ["MPK", "OSIS", "SEKOLAH"]);
+            $table->enum("to", ["wakil kesiswaan", "wakil sarpras", "wakil kurikulum", "wakil humas", "tata usaha", "organisasi", "umum"]);
             $table->timestamps();
         });
     }

@@ -30,8 +30,39 @@ class AspirationController extends Controller
             "to" => "required",
         ]);
 
-        $badWords = ["anjing", "bangsat", "goblok", "tai", "kontol", "bego", "anj", "anjay", "anjir", "a n j i n g", "tolol", "monyet", "babi", "memek", "pepek", "puki", "jancuk", "jancok", "kampret", "kntl", "kntol", "kntl", "kntol", "pantek", "panteq", "pantek", "panteq", "bajingan", "fuck", "shit", "asshole"
-    ];
+        $badWords = [
+            "anjing",
+            "bangsat",
+            "goblok",
+            "tai",
+            "kontol",
+            "bego",
+            "anj",
+            "anjay",
+            "anjir",
+            "a n j i n g",
+            "tolol",
+            "monyet",
+            "babi",
+            "memek",
+            "pepek",
+            "puki",
+            "jancuk",
+            "jancok",
+            "kampret",
+            "kntl",
+            "kntol",
+            "kntl",
+            "kntol",
+            "pantek",
+            "panteq",
+            "pantek",
+            "panteq",
+            "bajingan",
+            "fuck",
+            "shit",
+            "asshole"
+        ];
         foreach ($badWords as $word) {
             if (stripos($request->message, $word) !== false) {
                 return back()->withErrors(['message' => 'Pesan mengandung kata tidak pantas!'])->withInput();

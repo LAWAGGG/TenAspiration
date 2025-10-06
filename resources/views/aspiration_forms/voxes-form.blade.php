@@ -30,15 +30,15 @@
                 Sampaikan aspirasimu secara <span class="font-semibold text-red-500">anonim</span> melalui MPK.
             </p>
 
-               {{-- Alert sukses --}}
-            @if(session('success'))
+            {{-- Alert sukses --}}
+            @if (session('success'))
                 <div class="bg-green-100 text-green-700 border border-green-300 p-3 rounded-lg mb-4">
-                    ✅ {{ session('success') }}
+                    {{ session('success') }}
                 </div>
             @endif
 
             {{-- Alert error --}}
-            @if($errors->any())
+            @if ($errors->any())
                 <div class="bg-red-100 text-red-700 border border-red-300 p-3 rounded-lg mb-4">
                     ⚠️ {{ $errors->first() }}
                 </div>
@@ -51,12 +51,21 @@
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-red-500" fill="none"
                             viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                         </svg>
-                        Pesan Aspirasi
+                        Tujuan
                     </label>
-                    <textarea name="message" placeholder="Tulis aspirasi kamu di sini..." rows="3"
-                        class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-300 focus:border-red-300 transition"></textarea>
+                    <select name="to" required
+                        class="w-full border border-gray-300 rounded-lg p-3 bg-white focus:outline-none focus:ring-2 focus:ring-red-300 focus:border-red-300 transition appearance-none">
+                        <option value="">-- Pilih Target --</option>
+                        <option value="wakil kesiswaan">wakil kesiswaan</option>
+                        <option value="wakil sarpras">wakil sarpras</option>
+                        <option value="wakil kurikulum">wakil kurikulum</option>
+                        <option value="wakil humas">wakil humas</option>
+                        <option value="tata usaha">tata usaha</option>
+                        <option value="organisasi">organisasi</option>
+                        <option value="umum">umum</option>
+                    </select>
                 </div>
 
                 <div>
@@ -64,17 +73,13 @@
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-red-500" fill="none"
                             viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                         </svg>
-                        Tujuan
+                        Pesan Aspirasi (Kritik, Saran, & Masukan)
                     </label>
-                    <select name="to"
-                        class="w-full border border-gray-300 rounded-lg p-3 bg-white focus:outline-none focus:ring-2 focus:ring-red-300 focus:border-red-300 transition appearance-none">
-                        <option value="">-- Pilih Target --</option>
-                        <option value="MPK">MPK</option>
-                        <option value="OSIS">OSIS</option>
-                        <option value="SEKOLAH">Sekolah</option>
-                    </select>
+                    <textarea name="message" placeholder="Berikan Kritik, Saran, Dan Masukan Aspirasimu" rows="3"
+                        class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-300 focus:border-red-300 transition"
+                        required></textarea>
                 </div>
 
                 <button type="submit"
@@ -97,14 +102,17 @@
 
             {{-- Modal Panduan --}}
             <div x-show="hint" x-cloak
-                class="fixed inset-0 p-5 flex items-center justify-center bg-black bg-opacity-50 z-50">
+                class="fixed inset-0 p-5 backdrop-blur-sm flex items-center justify-center bg-black bg-opacity-50 z-50">
                 <div class="bg-white rounded-xl p-6 shadow-2xl text-center max-w-sm w-full border-t-4 border-blue-500">
                     <h2 class="text-xl font-bold text-gray-800 mb-2">Panduan</h2>
                     <p class="text-gray-600 mb-4 text-sm">
-                        1. Pilih tujuan aspirasi (MPK, OSIS, atau SEKOLAH).<br>
+                        1. Pilih tujuan aspirasi (Divisi-Divisi Dalam Sekolah).<br>
                         2. Tulis pesan aspirasi kamu di kolom "Pesan aspirasi".<br>
                         3. Gunakan bahasa yang baik dan benar.<br>
-                        4. Klik tombol "Kirim Aspirasi".
+                        4. Klik tombol "Kirim Aspirasi". <br>
+                        <br>
+                        Jika ingin melihat penjelasan lebih detail mengenai Divisi-Divisi Dalam Sekolah, lihat di <a
+                            class="text-blue-700 font-bold underline" href="">Sini!</a>
                     </p>
                     <button @click="hint = false"
                         class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">

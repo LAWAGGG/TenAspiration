@@ -11,9 +11,20 @@ Route::get('/', function () {
     return view('aspiration_forms.voxes-form');
 });
 
+Route::post('/aspirations', [AspirationController::class, 'store'])->name('aspirations.store');
+
+Route::get('/event', function () {
+    return view('aspiration_forms.event-form');
+});
+Route::get('/event', [EventController::class, 'getEvent'])->name('event');
+
+Route::post('/aspiration-events', [AspirationEventController::class, 'store'])->name('aspiration_events.store');
+
+
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
+
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -24,9 +35,6 @@ Route::middleware('auth')->group(function () {
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
-
-Route::post('/aspirations', [AspirationController::class, 'store'])->name('aspirations.store');
-Route::post('/aspiration-events', [AspirationEventController::class, 'store'])->name('aspiration_events.store');
 
 //dashboard utama
 Route::middleware('auth')->group(function () {

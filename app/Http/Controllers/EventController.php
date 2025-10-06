@@ -14,6 +14,12 @@ class EventController extends Controller
         return view('dashboard', compact('events'));
     }
 
+    public function getEvent()
+    {
+        $events = Event::latest()->get();
+        return view('aspiration_forms.event-form', compact('events'));
+    }
+
     public function store(Request $request)
     {
         $val = Validator::make($request->all(), [
