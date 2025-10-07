@@ -58,13 +58,22 @@
                     <select name="to" required
                         class="w-full border border-gray-300 rounded-lg p-3 bg-white focus:outline-none focus:ring-2 focus:ring-red-300 focus:border-red-300 transition appearance-none">
                         <option value="">-- Pilih Target --</option>
-                        <option value="wakil kesiswaan">wakil kesiswaan</option>
-                        <option value="wakil sarpras">wakil sarpras</option>
-                        <option value="wakil kurikulum">wakil kurikulum</option>
-                        <option value="wakil humas">wakil humas</option>
-                        <option value="tata usaha">tata usaha</option>
-                        <option value="organisasi">organisasi</option>
-                        <option value="umum">umum</option>
+                        <optgroup label="Wakil">
+                            <option value="wakil kesiswaan">wakil kesiswaan</option>
+                            <option value="wakil sarpras">wakil sarpras</option>
+                            <option value="wakil kurikulum">wakil kurikulum</option>
+                            <option value="wakil humas">wakil humas</option>
+                        </optgroup>
+                        <optgroup label="Tata usaha">
+                            <option value="tata usaha">tata usaha</option>
+                        </optgroup>
+                        <optgroup label="Organisasi">
+                            <option value="OSIS">OSIS</option>
+                            <option value="MPK">MPK</option>
+                        </optgroup>
+                        <optgroup label="Lainnya">
+                            <option value="umum">umum</option>
+                        </optgroup>
                     </select>
                 </div>
 

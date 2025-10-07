@@ -17,6 +17,7 @@ return new class extends Migration
             $table->text("message");
             $table->enum("to", ["Divisi Keamanan", "Divisi Kebersihan", "Divisi Acara", "Divisi Dokumentasi", "Divisi Humas", "Divisi Perlengkapan", "lainnya"]);
             $table->string("other_to")->nullable();
+            $table->string("bad_moment")->nullable();
             $table->timestamps();
         });
     }

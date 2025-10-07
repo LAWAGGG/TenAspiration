@@ -115,7 +115,20 @@
                         </svg>
                         Pesan Aspirasi (Kritik, Saran, & Masukan)
                     </label>
-                    <textarea name="message" rows="1" placeholder="Berikan Kritik, Saran, Dan Masukan Aspirasimu"
+                    <textarea name="message" rows="2" placeholder="Berikan Kritik, Saran, Dan Masukan Aspirasimu"
+                        class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300 transition"
+                        required></textarea>
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-gray-700 mb-2 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-blue-500" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                        </svg>
+                        Kejadian buruk yang dialami selama event (opsional)
+                    </label>
+                    <textarea name="bad_moment" rows="1" placeholder="jika tidak ada, berikan (-)"
                         class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300 transition"
                         required></textarea>
                 </div>
@@ -142,14 +155,17 @@
 
             <!-- Modal Panduan -->
             <div x-show="hint" x-cloak
-                class="fixed inset-0 p-5 flex items-center justify-center bg-black bg-opacity-75 z-50 backdrop-blur-sm">
+                class="fixed inset-0 p-5 flex items-center justify-center bg-black bg-opacity-50 z-50 backdrop-blur-sm">
                 <div class="bg-white rounded-xl p-6 shadow-2xl text-center max-w-sm w-full border-t-4 border-blue-500">
                     <h2 class="text-xl font-bold text-gray-800 mb-2">Panduan</h2>
                     <p class="text-gray-600 mb-4 text-sm">
                         1. Pilih tujuan aspirasi (divisi jobdesk).<br>
                         2. Tulis pesan aspirasi kamu di kolom "Pesan Aspirasi".<br>
                         3. Gunakan bahasa yang baik dan sopan.<br>
-                        4. Klik tombol "Kirim Aspirasi".
+                        4. Klik tombol "Kirim Aspirasi". <br>
+                        <br>
+                          Jika ingin melihat penjelasan lebih detail mengenai Divisi-Divisi event yang sedang diselenggarakan, lihat di <a
+                            class="text-blue-700 font-bold underline" href="">Sini!</a>
                     </p>
                     <button @click="hint = false"
                         class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-offset-2">

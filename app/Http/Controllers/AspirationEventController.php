@@ -27,6 +27,7 @@ class AspirationEventController extends Controller
             "to" => "required",
             "event_id" => "required|exists:events,id",
             "other_to" => "nullable|string|max:255",
+            "bad_moment" => "nullable|string|max:255",
         ]);
 
         $badWords = [
@@ -37,6 +38,10 @@ class AspirationEventController extends Controller
             "kontol",
             "bego",
             "anj",
+            "jing",
+            "jir",
+            "qontol",
+            "puqi",
             "anjay",
             "anjir",
             "a n j i n g",
@@ -53,6 +58,7 @@ class AspirationEventController extends Controller
             "kntol",
             "kntl",
             "kntol",
+            "kintil",
             "pantek",
             "panteq",
             "pantek",
@@ -66,6 +72,9 @@ class AspirationEventController extends Controller
             if (stripos($request->message, $word) !== false) {
                 return back()->withErrors(['message' => 'Pesan mengandung kata tidak pantas!'])->withInput();
             }
+            if (stripos($request->bad_moment, $word) !== false) {
+                return back()->withErrors(['message' => 'Pesan mengandung kata tidak pantas!'])->withInput();
+            }
         }
 
         AspirationEvent::create([
@@ -73,6 +82,7 @@ class AspirationEventController extends Controller
             "to" => $request->to,
             "event_id" => $request->event_id,
             "other_to" => $request->other_to,
+            "bad_moment" => $request->bad_moment,
         ]);
 
         return redirect()->back()->with('success', 'Aspirasi event berhasil dikirim!');
@@ -100,6 +110,7 @@ class AspirationEventController extends Controller
             "to" => "required",
             "event_id" => "required|exists:events,id",
             "other_to" => "nullable|string|max:255",
+            "bad_moment" => "nullable|string|max:255",
         ]);
 
         $aspiration = AspirationEvent::findOrFail($id);
@@ -108,6 +119,7 @@ class AspirationEventController extends Controller
             "to" => $request->to,
             "event_id" => $request->event_id,
             "other_to" => $request->other_to,
+            "bad_moment" => $request->bad_moment,
         ]);
 
         return redirect()->route('aspiration_events.index')->with('success', 'Aspirasi event berhasil diperbarui!');
@@ -145,7 +157,7 @@ class AspirationEventController extends Controller
             "Content-Disposition" => "inline; filename=aspirations_event_{$eventName}.csv",
         ];
 
-        $columns = ["ID", "Message", "To", "Other To", "Date"];
+        $columns = ["ID", "Message","Bad Moment", "To", "Other To", "Date"];
 
         return response()->stream(function () use ($aspirations, $columns) {
             $handle = fopen("php://output", "w");
@@ -155,9 +167,10 @@ class AspirationEventController extends Controller
                 fputcsv($handle, [
                     $asp->id,
                     $asp->message,
+                    $asp->bad_moment ?? "-",
                     $asp->to,
                     $asp->other_to ?? "-",
-                    $asp->created_at,
+                    $asp->created_at->timezone('Asia/Jakarta')->format('Y-m-d H:i:s'),
                 ], ";");
             }
 

@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Admin Dashboard - TenAspiration</title>
+    <title>Admin Dashboard</title>
     @vite('resources/css/app.css')
     <script src="//unpkg.com/alpinejs" defer></script>
 </head>
@@ -23,7 +23,7 @@
                 <div class="flex justify-between items-center py-4 md:py-6">
                     <div class="flex items-center space-x-3">
                         <div class="bg-red-500 p-2 rounded-lg">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white md:h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                             </svg>
                         </div>
@@ -81,7 +81,7 @@
                         </div>
                         <div>
                             <h3 class="font-semibold text-gray-900 text-base md:text-lg">Aspirasi The Voxes</h3>
-                            <p class="text-gray-600 text-xs md:text-sm">Kelola aspirasi harian dari siswa</p>
+                            <p class="text-gray-600 text-xs md:text-sm">Kelola aspirasi proker "The Voxes" dari siswa</p>
                         </div>
                     </div>
                 </a>
@@ -120,7 +120,7 @@
                         @foreach ($events as $event)
                             <div class="bg-gradient-to-br from-white to-red-50 rounded-xl border border-red-200 p-4 md:p-5 hover:shadow-md transition duration-200 group">
                                 <div class="flex justify-between items-start mb-3">
-                                    <h3 class="font-bold text-gray-900 text-base md:text-lg group-hover:text-red-600 transition duration-200 line-clamp-2">{{ $event->name }}</h3>
+                                    <h3 class="font-bold text-gray-900 text-base md:text-lg group-hover:text-red-600 transition duration-200 line-clamp-2">{{ $event->name }} <span class="font-normal text-gray-400">({{$event->aspiration->count()}} Aspirasi)</span></h3>
                                     <button @click="eventToDelete = {{ $event->id }}; eventToDeleteName = '{{ $event->name }}'; showDeleteModal = true"
                                         class="text-gray-400 hover:text-red-500 p-1 rounded-lg hover:bg-red-50 transition duration-200 flex-shrink-0 ml-2"
                                         title="Hapus Event">
@@ -174,13 +174,13 @@
         <!-- Modal Tambah Event -->
         <div x-show="showAddModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto">
             <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-                <div x-show="showAddModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+                <div x-show="showAddModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity"></div>
 
-                <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="inline-block w-full align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
                     <div class="bg-white px-4 sm:px-6 pt-6 pb-4">
                         <div class="flex items-center justify-between mb-4">
                             <h3 class="text-lg sm:text-xl font-bold text-gray-900">Tambah Event Baru</h3>
-                            <button @click="showAddModal = false" class="text-gray-400 hover:text-gray-500">
+                            <button @click="showAddModal = false" class="text-gray-400 hover:text-black">
                                 <svg class="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                 </svg>
@@ -226,7 +226,7 @@
         <!-- Modal Delete Confirmation -->
         <div x-show="showDeleteModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto">
             <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-                <div x-show="showDeleteModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+                <div x-show="showDeleteModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity"></div>
 
                 <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
                     <div class="bg-white px-4 sm:px-6 pt-6 pb-4">

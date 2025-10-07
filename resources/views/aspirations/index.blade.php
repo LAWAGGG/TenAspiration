@@ -13,7 +13,7 @@
 
     <!-- Header -->
     <div class="max-w-4xl mx-auto mb-8 flex flex-col md:flex-row items-center justify-between gap-4">
-        <h1 class="text-2xl font-bold text-red-700 text-center md:text-left">📜 Daftar Aspirasi   <span class="text-sm text-gray-500 font-normal"
+        <h1 class="text-2xl font-bold text-red-700 text-center flex items-center gap-2 md:text-left">📜 Daftar Aspirasi   <span class="text-gray-500"
           x-text="'(' + filteredAspirations.length + ')'"></span></h1>
 
         <div class="flex items-center gap-3">
@@ -26,7 +26,8 @@
                 <option value="wakil kurikulum">wakil kurikulum</option>
                 <option value="wakil humas">wakil humas</option>
                 <option value="tata usaha">tata usaha</option>
-                <option value="organisasi">organisasi</option>
+                <option value="MPK">MPK</option>
+                <option value="OSIS">OSIS</option>
                 <option value="umum">umum</option>
             </select>
 

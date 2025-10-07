@@ -136,7 +136,7 @@ class AspirationController extends Controller
                     $asp->id,
                     $asp->message,
                     $asp->to,
-                    $asp->created_at,
+                    $asp->created_at->timezone('Asia/Jakarta')->format('Y-m-d H:i:s'),
                 ], ";");
             }
 
