@@ -7,13 +7,48 @@
     <title>Kirim Aspirasi</title>
     @vite('resources/css/app.css')
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <style>
+        [x-cloak] {
+            display: none !important;
+        }
 
+        .loading-spinner {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #3498db;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
 </head>
 
 <body class="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 p-4">
 
     <div class="card border bg-white shadow-2xl rounded-3xl p-8 w-full max-w-md border-blue-500 relative overflow-hidden"
-        x-data="{ hint: false }">
+         x-data="{
+            hint: false,
+            successModal: @if(session('success')) true @else false @endif,
+            isLoading: false
+        }"
+        x-init="
+            // Inisialisasi untuk menangani redirect dengan session success
+            @if(session('success'))
+                setTimeout(() => { successModal = true }, 100);
+            @endif
+        ">
 
         <div class="absolute -top-20 -right-20 w-40 h-40 rounded-full bg-blue-100 opacity-30"></div>
         <div class="absolute -bottom-16 -left-16 w-32 h-32 rounded-full bg-blue-100 opacity-30"></div>
@@ -31,14 +66,6 @@
                 sedang diselenggarakan.
             </p>
 
-            <!-- Pesan sukses -->
-            @if (session('success'))
-                <div
-                    class="mt-6 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative text-center">
-                    <span class="block sm:inline">{{ session('success') }}</span>
-                </div>
-            @endif
-
             <!-- Error -->
             @if ($errors->any())
                 <div class="mt-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative text-sm">
@@ -51,7 +78,8 @@
             @endif
 
             <!-- Form aspirasi -->
-            <form action="{{ route('aspiration_events.store') }}" method="POST" class="space-y-4">
+            <form action="{{ route('aspiration_events.store') }}" method="POST" class="space-y-4"
+                x-on:submit="isLoading = true">
                 @csrf
 
                 <div>
@@ -115,7 +143,7 @@
                         </svg>
                         Pesan Aspirasi (Kritik, Saran, & Masukan)
                     </label>
-                    <textarea name="message" rows="2" placeholder="Berikan Kritik, Saran, Dan Masukan Aspirasimu"
+                    <textarea name="message" rows="1" placeholder="Berikan Kritik, Saran, Dan Masukan Aspirasimu"
                         class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300 transition"
                         required></textarea>
                 </div>
@@ -133,17 +161,21 @@
                         required></textarea>
                 </div>
 
-                <!-- Event -->
-
                 <!-- Tombol kirim -->
                 <button type="submit"
-                    class="w-full py-3 rounded-lg font-semibold shadow-md transition-all duration-200 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                    </svg>
-                    Kirim Aspirasi
+                    class="w-full py-3 rounded-lg font-semibold shadow-md transition-all duration-200 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white flex items-center justify-center"
+                    :disabled="isLoading">
+                    <template x-if="isLoading">
+                        <div class="loading-spinner"></div>
+                    </template>
+                    <template x-if="!isLoading">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                        </svg>
+                    </template>
+                    <span x-text="isLoading ? 'Mengirim...' : 'Kirim Aspirasi'"></span>
                 </button>
 
                 <!-- Tombol Panduan -->
@@ -164,8 +196,9 @@
                         3. Gunakan bahasa yang baik dan sopan.<br>
                         4. Klik tombol "Kirim Aspirasi". <br>
                         <br>
-                          Jika ingin melihat penjelasan lebih detail mengenai Divisi-Divisi event yang sedang diselenggarakan, lihat di <a
-                            class="text-blue-700 font-bold underline" href="">Sini!</a>
+                        Jika ingin melihat penjelasan lebih detail mengenai Divisi-Divisi event yang sedang
+                        diselenggarakan, lihat di <a class="text-blue-700 font-bold underline"
+                            href="">Sini!</a>
                     </p>
                     <button @click="hint = false"
                         class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-offset-2">
@@ -174,9 +207,28 @@
                 </div>
             </div>
 
-            <p class="mt-6 text-xs text-gray-500 text-center italic">
-                "Suara Anda penting bagi kami. Setiap aspirasi akan ditinjau oleh MPK."
-            </p>
+            <!-- Modal Sukses -->
+            <div x-show="successModal" x-cloak
+                class="fixed inset-0 p-5 flex items-center justify-center bg-black bg-opacity-50 z-50 backdrop-blur-sm">
+                <div
+                    class="bg-white rounded-xl p-6 shadow-2xl text-center max-w-sm w-full border-t-4 border-green-500">
+                    <div class="flex justify-center mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-green-500" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-800 mb-2">Aspirasi Terkirim!</h2>
+                    <p class="text-gray-600 mb-4 text-sm">
+                        {{ session('success') ?? 'Terima kasih telah menyampaikan aspirasi Anda. Suara Anda sangat berarti bagi kami.' }}
+                    </p>
+                    <button @click="successModal = false"
+                        class="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition focus:outline-none focus:ring-2 focus:ring-green-300 focus:ring-offset-2">
+                        Tutup
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -185,7 +237,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             @if (session('success'))
                 setTimeout(() => {
-                    Alpine.data().showModal = true;
+                    Alpine.data().successModal = true;
                 }, 100);
             @endif
         });

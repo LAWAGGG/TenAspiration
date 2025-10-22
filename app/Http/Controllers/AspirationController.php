@@ -97,6 +97,7 @@ class AspirationController extends Controller
         ]);
 
         $aspiration = Aspiration::findOrFail($id);
+        
         $aspiration->update([
             "message" => $request->message,
             "to" => $request->to,

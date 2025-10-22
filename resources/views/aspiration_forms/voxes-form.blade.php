@@ -7,13 +7,34 @@
     <title>Kirim Aspirasi</title>
     @vite('resources/css/app.css')
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-
+    <style>
+        [x-cloak] { display: none !important; }
+        .loading-spinner {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #ffffff;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
 </head>
 
 <body class="flex items-center justify-center min-h-screen bg-gradient-to-br from-red-50 via-white to-red-50 p-4">
 
     <div class="card border bg-white shadow-2xl rounded-3xl p-8 w-full max-w-md border-red-500 relative overflow-hidden"
-        x-data="{ showModal: false, hint: false }">
+        x-data="{
+            showModal: @if(session('success')) true @else false @endif,
+            hint: false,
+            isLoading: false
+        }"
+        x-init="@if(session('success')) setTimeout(() => { showModal = true }, 100); @endif">
 
         <div class="absolute -top-20 -right-20 w-40 h-40 rounded-full bg-red-100 opacity-30"></div>
         <div class="absolute -bottom-16 -left-16 w-32 h-32 rounded-full bg-red-100 opacity-30"></div>
@@ -30,13 +51,6 @@
                 Sampaikan aspirasimu secara <span class="font-semibold text-red-500">anonim</span> melalui MPK.
             </p>
 
-            {{-- Alert sukses --}}
-            @if (session('success'))
-                <div class="bg-green-100 text-green-700 border border-green-300 p-3 rounded-lg mb-4">
-                    {{ session('success') }}
-                </div>
-            @endif
-
             {{-- Alert error --}}
             @if ($errors->any())
                 <div class="bg-red-100 text-red-700 border border-red-300 p-3 rounded-lg mb-4">
@@ -44,7 +58,8 @@
                 </div>
             @endif
 
-            <form method="POST" action="{{ route('aspirations.store') }}" class="space-y-5">
+            <form method="POST" action="{{ route('aspirations.store') }}" class="space-y-5"
+                  x-on:submit="isLoading = true">
                 @csrf
                 <div>
                     <label class="text-sm font-medium text-gray-700 mb-2 flex items-center">
@@ -92,15 +107,19 @@
                 </div>
 
                 <button type="submit"
-                    class="w-full py-3 rounded-lg font-semibold shadow-md bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white transition">
-                    <div class="flex items-center justify-center">
+                    class="w-full py-3 rounded-lg font-semibold shadow-md bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white transition flex items-center justify-center"
+                    :disabled="isLoading">
+                    <template x-if="isLoading">
+                        <div class="loading-spinner"></div>
+                    </template>
+                    <template x-if="!isLoading">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                         </svg>
-                        Kirim Aspirasi
-                    </div>
+                    </template>
+                    <span x-text="isLoading ? 'Mengirim...' : 'Kirim Aspirasi'"></span>
                 </button>
 
                 <button type="button" @click="hint = true"
@@ -108,6 +127,26 @@
                     Panduan
                 </button>
             </form>
+
+            {{-- Modal Sukses --}}
+            <div x-show="showModal" x-cloak
+                class="fixed inset-0 p-5 backdrop-blur-sm flex items-center justify-center bg-black bg-opacity-50 z-50">
+                <div class="bg-white rounded-xl p-6 shadow-2xl text-center max-w-sm w-full border-t-4 border-green-500">
+                    <div class="flex justify-center mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-800 mb-2">Aspirasi Terkirim!</h2>
+                    <p class="text-gray-600 mb-4 text-sm">
+                        {{ session('success') ?? 'Terima kasih telah menyampaikan aspirasi Anda. Suara Anda sangat berarti bagi perkembangan sekolah.' }}
+                    </p>
+                    <button @click="showModal = false"
+                        class="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition">
+                        Tutup
+                    </button>
+                </div>
+            </div>
 
             {{-- Modal Panduan --}}
             <div x-show="hint" x-cloak
@@ -129,10 +168,6 @@
                     </button>
                 </div>
             </div>
-
-            <p class="mt-6 text-xs text-gray-500 text-center italic">
-                "Suara Anda penting bagi kami. Setiap aspirasi akan ditinjau oleh MPK."
-            </p>
         </div>
     </div>
 

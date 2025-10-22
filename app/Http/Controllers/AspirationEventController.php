@@ -10,7 +10,7 @@ class AspirationEventController extends Controller
 
     public function index()
     {
-        $aspirations = AspirationEvent::orderByDesc("created_at")->get();
+        $aspirations = AspirationEvent::orderByDesc("created_at")->with(['event'])->get();
         return view('aspiration_events.index', compact('aspirations'));
     }
 
@@ -61,12 +61,12 @@ class AspirationEventController extends Controller
             "kintil",
             "pantek",
             "panteq",
-            "pantek",
-            "panteq",
             "bajingan",
             "fuck",
             "shit",
-            "asshole"
+            "asshole",
+            "anying",
+            "lonte"
         ];
         foreach ($badWords as $word) {
             if (stripos($request->message, $word) !== false) {
@@ -137,9 +137,11 @@ class AspirationEventController extends Controller
 
     public function showAspirationByEvent($eventId)
     {
-        $aspirations = AspirationEvent::where('event_id', $eventId)->orderByDesc('created_at')->get();
+        $aspirations = AspirationEvent::where('event_id', $eventId)->with(['event'])->orderByDesc('created_at')->get();
 
-        return view('aspiration_events.by_event', compact('aspirations', 'eventId'));
+        $eventName = $aspirations->first()?->event?->name ?? 'Event Tidak Dikenal';
+
+        return view('aspiration_events.by_event', compact('aspirations', 'eventId','eventName'));
     }
 
 

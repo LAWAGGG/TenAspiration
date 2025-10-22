@@ -13,8 +13,10 @@
 
     <!-- Header -->
     <div class="max-w-4xl mx-auto mb-8 flex flex-col md:flex-row items-center justify-between gap-4">
-        <h1 class="text-2xl font-bold text-red-700 text-center flex items-center gap-2 md:text-left">📜 Daftar Aspirasi   <span class="text-gray-500"
-          x-text="'(' + filteredAspirations.length + ')'"></span></h1>
+        <h1 class="text-2xl font-bold text-red-700 text-center flex items-center gap-2 md:text-left">
+            📜 Daftar Aspirasi
+            <span class="text-gray-500" x-text="'(' + filteredAspirations.length + ')'"></span>
+        </h1>
 
         <div class="flex items-center gap-3">
             <!-- Filter Dropdown -->
@@ -55,13 +57,13 @@
                 </div>
                 <div class="flex justify-end">
                     <button @click="confirmDelete(asp.id)"
-                        class="text-gray-500 flex justify-end  px-3 py-1 rounded-lg text-sm hover:bg-gray-200 cursor-pointer">
+                        class="text-gray-500 flex justify-end px-3 py-1 rounded-lg text-sm hover:bg-gray-200 cursor-pointer">
                         🗑
                     </button>
                 </div>
-
             </div>
         </template>
+
         <div x-show="filteredAspirations.length === 0" class="bg-white rounded-xl w-full shadow-md p-8 text-center">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-400 mb-4" fill="none"
                 viewBox="0 0 24 24" stroke="currentColor">
@@ -75,22 +77,35 @@
 
     <!-- Delete Modal -->
     <div x-show="showDeleteModal"
-        class="fixed inset-0 p-5 bg-opacity-75 flex justify-center items-center bg-black z-50 backdrop-blur-sm" x-cloak>
+        class="fixed inset-0 p-5 bg-opacity-75 flex justify-center items-center bg-black z-50 backdrop-blur-sm"
+        x-cloak>
         <div class="bg-white rounded-xl shadow-lg p-6 w-96 text-center">
             <h2 class="text-lg font-semibold text-gray-800 mb-4">Konfirmasi Hapus</h2>
             <p class="text-gray-600 mb-6">Apakah kamu yakin ingin menghapus aspirasi ini?</p>
             <div class="flex justify-center gap-4">
                 <button @click="showDeleteModal=false"
-                    class="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400">Batal</button>
-                <button @click="handleDelete" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Ya,
-                    Hapus</button>
+                    class="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400"
+                    :disabled="loading">Batal</button>
+
+                <button @click="handleDelete" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center justify-center gap-2"
+                    :disabled="loading">
+                    <template x-if="loading">
+                        <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
+                            viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor"
+                                d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                        </svg>
+                    </template>
+                    <span x-text="loading ? 'Menghapus...' : 'Ya, Hapus'"></span>
+                </button>
             </div>
         </div>
     </div>
 
     <!-- Back button -->
     <div class="fixed right-5 bottom-5 bg-red-500 p-3 rounded-xl text-white">
-
         <a href="{{ route('dashboard') }}" class="flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                 stroke="currentColor">
@@ -107,6 +122,7 @@
                 filterTarget: '',
                 showDeleteModal: false,
                 deleteId: null,
+                loading: false,
 
                 get filteredAspirations() {
                     return this.aspirations.filter(a => this.filterTarget === '' || a.to === this.filterTarget);
@@ -124,18 +140,24 @@
                     this.showDeleteModal = true;
                 },
 
-                handleDelete() {
+                async handleDelete() {
                     if (!this.deleteId) return;
-                    fetch(`/aspirations/${this.deleteId}`, {
-                        method: 'DELETE',
-                        headers: {
-                            "X-CSRF-TOKEN": "{{ csrf_token() }}"
-                        }
-                    }).then(() => {
+                    this.loading = true;
+                    try {
+                        await fetch(`/aspirations/${this.deleteId}`, {
+                            method: 'DELETE',
+                            headers: {
+                                "X-CSRF-TOKEN": "{{ csrf_token() }}"
+                            }
+                        });
                         this.aspirations = this.aspirations.filter(a => a.id !== this.deleteId);
+                    } catch (error) {
+                        console.error('Gagal menghapus:', error);
+                    } finally {
+                        this.loading = false;
                         this.deleteId = null;
                         this.showDeleteModal = false;
-                    });
+                    }
                 },
 
                 exportCsv() {

@@ -17,7 +17,7 @@
         <div class="mb-8 flex flex-col md:flex-row items-center justify-between gap-4">
             <div class="text-center md:text-left">
                 <h1 class="text-3xl font-bold text-gray-800 mb-2">
-                    Aspirasi <span class="text-red-600">Event</span>
+                    Aspirasi <span class="text-red-600">{{$eventName}}</span>
                 </h1>
                 <p class="text-gray-600">Daftar aspirasi yang telah dikumpulkan  <span class="text-gray-500"
           x-text="'(' + filteredAspirations.length + ' Aspirasi' + ')'"></span></p>
