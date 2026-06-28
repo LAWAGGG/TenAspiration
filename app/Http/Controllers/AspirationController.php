@@ -8,36 +8,76 @@ use Illuminate\Support\Facades\Validator;
 
 class AspirationController extends Controller
 {
+    public function bulkDestroy(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'integer|exists:aspirations,id',
+        ]);
+
+        Aspiration::whereIn('id', $request->ids)->delete();
+
+        return response()->json(['message' => 'Aspirasi berhasil dihapus!']);
+    }
+
+    public function aspirationForm()
+    {
+        return view('aspiration_forms.voxes-form');
+    }
 
     public function index()
     {
-
-        $aspirations = Aspiration::orderByDesc("created_at")->get();
-
-
-        return view('aspirations.index', compact('aspirations'));
+        return view('aspirations.index');
     }
 
-    public function create()
+    public function fetchPaginated(Request $request)
     {
-        return view('aspirations.create');
+        $query = Aspiration::query();
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('message', 'like', "%{$search}%")
+                  ->orWhere('to', 'like', "%{$search}%")
+                  ->orWhere('kelas', 'like', "%{$search}%");
+            });
+        }
+        if ($request->filled('filterBagian')) {
+            $query->where('to', $request->filterBagian);
+        }
+        if ($request->filled('filterKelas')) {
+            $query->where('kelas', $request->filterKelas);
+        }
+        if ($request->filled('dateFrom')) {
+            $query->whereDate('created_at', '>=', $request->dateFrom);
+        }
+        if ($request->filled('dateTo')) {
+            $query->whereDate('created_at', '<=', $request->dateTo);
+        }
+
+        $perPage = $request->input('per_page', 12);
+        $aspirations = $query->orderByDesc('created_at')->paginate($perPage);
+
+        return response()->json($aspirations);
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            "message" => "required",
-            "to" => "required",
+            "messages" => "required|array",
+            "kelas" => "required|in:X,XI,XII",
         ]);
 
         $badWords = [
             "anjing",
             "bangsat",
             "goblok",
-            "tai",
             "kontol",
             "bego",
-            "anj",
+            "jing",
+            "jir",
+            "qontol",
+            "puqi",
             "anjay",
             "anjir",
             "a n j i n g",
@@ -52,27 +92,37 @@ class AspirationController extends Controller
             "kampret",
             "kntl",
             "kntol",
-            "kntl",
-            "kntol",
-            "pantek",
-            "panteq",
+            "kintil",
             "pantek",
             "panteq",
             "bajingan",
+            "badjingan",
             "fuck",
             "shit",
-            "asshole"
+            "asshole",
+            "anying",
+            "lonte",
+            "kontoI",
+            "4njing",
+            "babl",
+            "bacot"
         ];
-        foreach ($badWords as $word) {
-            if (stripos($request->message, $word) !== false) {
-                return back()->withErrors(['message' => 'Pesan mengandung kata tidak pantas!'])->withInput();
-            }
-        }
 
-        Aspiration::create([
-            "message" => $request->message,
-            "to" => $request->to,
-        ]);
+        foreach ($request->messages as $tujuan => $pesan) {
+            if (trim($pesan) === "") continue;
+
+            foreach ($badWords as $word) {
+                if (stripos($pesan, $word) !== false) {
+                    return back()->withErrors(['message' => "Pesan mengandung kata {$word}! tolong diubah"])->withInput();
+                }
+            }
+
+            Aspiration::create([
+                "to" => $tujuan,
+                "message" => $pesan,
+                "kelas" => $request->kelas,
+            ]);
+        }
 
         return redirect()->back()->with('success', 'Aspirasi berhasil dikirim!');
     }
@@ -97,7 +147,7 @@ class AspirationController extends Controller
         ]);
 
         $aspiration = Aspiration::findOrFail($id);
-        
+
         $aspiration->update([
             "message" => $request->message,
             "to" => $request->to,
@@ -117,16 +167,34 @@ class AspirationController extends Controller
     /**
      * Export CSV
      */
-    public function exportCsv()
+    public function exportCsv(Request $request)
     {
-        $aspirations = Aspiration::get();
+        $query = Aspiration::query();
+
+        if ($request->filled('to')) {
+            $query->where('to', $request->to);
+        }
+        if ($request->filled('kelas')) {
+            $query->where('kelas', $request->kelas);
+        }
+        if ($request->filled('search')) {
+            $query->where('message', 'like', '%' . $request->search . '%');
+        }
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        $aspirations = $query->orderByDesc('created_at')->get();
 
         $headers = [
             "Content-Type" => "text/csv",
-            "Content-Disposition" => "inline; filename=aspirations.csv",
+            "Content-Disposition" => "inline; filename=aspirasi_audiensi.csv",
         ];
 
-        $columns = ["ID", "Message", "To", "Date"];
+        $columns = ["Timestamps", "Pesan kritik, saran, masukan", "Kepada", "Kelas"];
 
         return response()->stream(function () use ($aspirations, $columns) {
             $handle = fopen("php://output", "w");
@@ -134,10 +202,10 @@ class AspirationController extends Controller
 
             foreach ($aspirations as $asp) {
                 fputcsv($handle, [
-                    $asp->id,
+                    $asp->created_at->timezone('Asia/Jakarta')->format('Y-m-d H:i:s'),
                     $asp->message,
                     $asp->to,
-                    $asp->created_at->timezone('Asia/Jakarta')->format('Y-m-d H:i:s'),
+                    $asp->kelas,
                 ], ";");
             }
 

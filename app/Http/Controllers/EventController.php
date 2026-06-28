@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Aspiration;
+use App\Models\AspirationKeluhKesah;
 use App\Models\Event;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -11,7 +13,18 @@ class EventController extends Controller
     public function index()
     {
         $events = Event::latest()->get();
-        return view('dashboard', compact('events'));
+        $totalAspirations = Aspiration::count();
+        $todayAspirations = Aspiration::whereDate('created_at', today())->count();
+        $totalKeluhKesah = AspirationKeluhKesah::count();
+        $totalEvents = Event::count();
+
+        return view('dashboard', compact(
+            'events',
+            'totalAspirations',
+            'todayAspirations',
+            'totalKeluhKesah',
+            'totalEvents'
+        ));
     }
 
     public function getEvent()

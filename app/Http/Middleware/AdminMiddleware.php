@@ -16,7 +16,7 @@ class AdminMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (!Auth::check() || Auth::user()->role !== 'admin') {
+        if (!Auth::check() || Auth::user()->role !== 'admin' || Auth::user()->role !== 'wakil') {
             return redirect('/')
                 ->with('error', 'Kamu tidak memiliki akses ke halaman ini!');
         }

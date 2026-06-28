@@ -20,5 +20,13 @@ class DatabaseSeeder extends Seeder
                 "password" => bcrypt("mpk58")
             ]
         ]);
+
+        User::insert([
+            [
+                "name" => "wakil",
+                "role" => "wakil",
+                "password" => bcrypt("wakilsmkn10")
+            ]
+        ]);
     }
 }

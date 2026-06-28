@@ -3,10 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\AspirationEvent;
+use App\Models\Event;
 use Illuminate\Http\Request;
 
 class AspirationEventController extends Controller
 {
+     public function aspirationForm(){
+        return view('aspiration_forms.event-form');
+    }
 
     public function index()
     {
@@ -14,30 +18,23 @@ class AspirationEventController extends Controller
         return view('aspiration_events.index', compact('aspirations'));
     }
 
-    public function create()
-    {
-        return view('aspiration_events.create');
-    }
-
 
     public function store(Request $request)
     {
         $request->validate([
             "message" => "required",
-            "to" => "required",
+            "kesan_pesan" => "required",
+            "perubahan_dari_event" => "required",
             "event_id" => "required|exists:events,id",
-            "other_to" => "nullable|string|max:255",
-            "bad_moment" => "nullable|string|max:255",
+            "bad_moment" => "nullable|string",
         ]);
 
         $badWords = [
             "anjing",
             "bangsat",
             "goblok",
-            "tai",
             "kontol",
             "bego",
-            "anj",
             "jing",
             "jir",
             "qontol",
@@ -56,32 +53,46 @@ class AspirationEventController extends Controller
             "kampret",
             "kntl",
             "kntol",
-            "kntl",
-            "kntol",
             "kintil",
             "pantek",
             "panteq",
             "bajingan",
+            "badjingan",
             "fuck",
             "shit",
             "asshole",
             "anying",
-            "lonte"
+            "lonte",
+            "kontoI",
+            "4njing",
+            "babl",
+            "bacot",
+            "anj1ng",
+            "m3m3k",
+            "ngentod",
+            "toloI",
         ];
+
         foreach ($badWords as $word) {
             if (stripos($request->message, $word) !== false) {
-                return back()->withErrors(['message' => 'Pesan mengandung kata tidak pantas!'])->withInput();
+                return back()->withErrors(['message' => "Pesan mengandung kata {$word}! tolong diubah"])->withInput();
             }
             if (stripos($request->bad_moment, $word) !== false) {
-                return back()->withErrors(['message' => 'Pesan mengandung kata tidak pantas!'])->withInput();
+                return back()->withErrors(['message' => "Pesan mengandung kata {$word}! tolong diubah"])->withInput();
+            }
+            if (stripos($request->kesan_pesan, $word) !== false) {
+                return back()->withErrors(['message' => "Pesan mengandung kata {$word}! tolong diubah"])->withInput();
+            }
+            if (stripos($request->perubahan_dari_event, $word) !== false) {
+                return back()->withErrors(['message' => "Pesan mengandung kata {$word}! tolong diubah"])->withInput();
             }
         }
 
         AspirationEvent::create([
             "message" => $request->message,
-            "to" => $request->to,
+            "kesan_pesan" => $request->kesan_pesan,
+            "perubahan_dari_event" => $request->perubahan_dari_event,
             "event_id" => $request->event_id,
-            "other_to" => $request->other_to,
             "bad_moment" => $request->bad_moment,
         ]);
 
@@ -107,18 +118,18 @@ class AspirationEventController extends Controller
     {
         $request->validate([
             "message" => "required",
-            "to" => "required",
+            "kesan_pesan" => "required",
+            "perubahan_dari_event" => "required",
             "event_id" => "required|exists:events,id",
-            "other_to" => "nullable|string|max:255",
             "bad_moment" => "nullable|string|max:255",
         ]);
 
         $aspiration = AspirationEvent::findOrFail($id);
         $aspiration->update([
             "message" => $request->message,
-            "to" => $request->to,
+            "kesan_pesan" => $request->kesan_pesan,
+            "perubahan_dari_event" => $request->perubahan_dari_event,
             "event_id" => $request->event_id,
-            "other_to" => $request->other_to,
             "bad_moment" => $request->bad_moment,
         ]);
 
@@ -137,18 +148,58 @@ class AspirationEventController extends Controller
 
     public function showAspirationByEvent($eventId)
     {
-        $aspirations = AspirationEvent::where('event_id', $eventId)->with(['event'])->orderByDesc('created_at')->get();
+        $event = Event::where('id', $eventId)->first();
+        $eventName = $event->name ?? 'Event Tidak Dikenal';
 
-        $eventName = $aspirations->first()?->event?->name ?? 'Event Tidak Dikenal';
+        return view('aspiration_events.by_event', compact('eventId', 'eventName'));
+    }
 
-        return view('aspiration_events.by_event', compact('aspirations', 'eventId','eventName'));
+    public function fetchPaginatedByEvent(Request $request, $eventId)
+    {
+        $query = AspirationEvent::where('event_id', $eventId)->with(['event']);
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('message', 'like', "%{$search}%")
+                  ->orWhere('kesan_pesan', 'like', "%{$search}%")
+                  ->orWhere('perubahan_dari_event', 'like', "%{$search}%");
+            });
+        }
+        if ($request->filled('dateFrom')) {
+            $query->whereDate('created_at', '>=', $request->dateFrom);
+        }
+        if ($request->filled('dateTo')) {
+            $query->whereDate('created_at', '<=', $request->dateTo);
+        }
+
+        $perPage = $request->input('per_page', 12);
+        $aspirations = $query->orderByDesc('created_at')->paginate($perPage);
+
+        return response()->json($aspirations);
     }
 
 
-    public function exportCsv($eventId)
+    public function exportCsv(Request $request, $eventId)
     {
-        $aspirations = AspirationEvent::where("event_id", $eventId)->with(['event'])->get();
-        $eventName = $aspirations->first()->event->name;
+        $query = AspirationEvent::where("event_id", $eventId)->with(['event']);
+
+        if ($request->filled('search')) {
+            $query->where(function ($q) use ($request) {
+                $q->where('message', 'like', '%' . $request->search . '%')
+                  ->orWhere('kesan_pesan', 'like', '%' . $request->search . '%')
+                  ->orWhere('perubahan_dari_event', 'like', '%' . $request->search . '%');
+            });
+        }
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        $aspirations = $query->orderByDesc('created_at')->get();
+        $eventName = $aspirations->first()->event->name ?? 'Event';
 
         if ($aspirations->isEmpty()) {
             return redirect()->back()->with('error', 'Belum ada aspirasi untuk event ini.');
@@ -159,7 +210,7 @@ class AspirationEventController extends Controller
             "Content-Disposition" => "inline; filename=aspirations_event_{$eventName}.csv",
         ];
 
-        $columns = ["ID", "Message","Bad Moment", "To", "Other To", "Date"];
+        $columns = ["timestamps", "Kritik, Saran, Masukan", "Kejadian buruk yang didapati", "Kesan dan Pesan", "Perubahan dari event sebelumnya"];
 
         return response()->stream(function () use ($aspirations, $columns) {
             $handle = fopen("php://output", "w");
@@ -167,12 +218,11 @@ class AspirationEventController extends Controller
 
             foreach ($aspirations as $asp) {
                 fputcsv($handle, [
-                    $asp->id,
+                    $asp->created_at->timezone('Asia/Jakarta')->format('Y-m-d H:i:s'),
                     $asp->message,
                     $asp->bad_moment ?? "-",
-                    $asp->to,
-                    $asp->other_to ?? "-",
-                    $asp->created_at->timezone('Asia/Jakarta')->format('Y-m-d H:i:s'),
+                    $asp->kesan_pesan,
+                    $asp->perubahan_dari_event,
                 ], ";");
             }
 

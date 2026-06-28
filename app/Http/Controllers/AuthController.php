@@ -31,7 +31,11 @@ class AuthController extends Controller
             return back()->with('error', 'Nama atau password salah.');
         }
 
-        return redirect()->route('dashboard')->with('success', 'Login berhasil!');
+        if (Auth::user()->role == "admin") {
+            return redirect()->route('dashboard')->with('success', 'Login berhasil!');
+        } elseif (Auth::user()->role == "wakil") {
+            return redirect()->route('aspiration_keluhkesah.index')->with('success', 'Login berhasil!');
+        }
     }
 
     // Proses logout
@@ -41,6 +45,6 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('login')->with('success', 'Berhasil logout!');
+        return redirect()->route('aspirations.create')->with('success', 'Berhasil logout!');
     }
 }
