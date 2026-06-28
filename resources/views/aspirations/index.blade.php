@@ -130,9 +130,9 @@
                         <h3 class="text-lg font-semibold"
                             :class="asp.to === 'MPK' ? 'text-red-700' : asp.to === 'OSIS' ? 'text-blue-700' :
                                 'text-black'">
-                            🎯 <span x-text="asp.to"></span>
+                            🎯 <span x-html="highlightText(asp.to, searchQuery)"></span>
                         </h3>
-                        <p class="text-gray-700 mt-1 break-words" x-text="asp.message"></p>
+                        <p class="text-gray-700 mt-1 break-words" x-html="highlightText(asp.message, searchQuery)"></p>
                         <p class="text-gray-700 mt-1" x-text="asp.kelas"></p>
                         <p class="text-xs text-gray-500 mt-3" x-text="asp.created_at ? formatDate(asp.created_at) : ''">
                         </p>
@@ -314,6 +314,14 @@
                 shareUrl: '',
                 shareTitle: '',
                 copied: false,
+
+                highlightText(text, query) {
+                    if (!query || !text) return text;
+                    const escapedText = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    const regex = new RegExp(`(${escapedQuery})`, 'gi');
+                    return escapedText.replace(regex, '<mark class="bg-yellow-200 px-0.5 rounded">$1</mark>');
+                },
 
                 async fetchAspirations(reset = true) {
                     if (reset) {

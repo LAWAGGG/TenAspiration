@@ -113,7 +113,7 @@
                                 <div class="mb-4 flex-1">
                                     <p class="text-gray-800 text-sm leading-relaxed"
                                        :class="open ? '' : 'line-clamp-3'"
-                                       x-text="asp.message"></p>
+                                       x-html="highlightText(asp.message, searchQuery)"></p>
                                 </div>
 
                                 {{-- Additional Content --}}
@@ -126,7 +126,7 @@
                                                 </svg>
                                                 Kesan & Pesan
                                             </h4>
-                                            <p class="text-gray-700 text-sm leading-relaxed" x-text="asp.kesan_pesan"></p>
+                                            <p class="text-gray-700 text-sm leading-relaxed" x-html="highlightText(asp.kesan_pesan, searchQuery)"></p>
                                         </div>
                                     </template>
 
@@ -138,7 +138,7 @@
                                                 </svg>
                                                 Kejadian buruk
                                             </h4>
-                                            <p class="text-gray-700 text-sm leading-relaxed" x-text="asp.bad_moment"></p>
+                                            <p class="text-gray-700 text-sm leading-relaxed" x-html="highlightText(asp.bad_moment, searchQuery)"></p>
                                         </div>
                                     </template>
 
@@ -150,7 +150,7 @@
                                                 </svg>
                                                 Perubahan dari event
                                             </h4>
-                                            <p class="text-gray-700 text-sm leading-relaxed" x-text="asp.perubahan_dari_event"></p>
+                                            <p class="text-gray-700 text-sm leading-relaxed" x-html="highlightText(asp.perubahan_dari_event, searchQuery)"></p>
                                         </div>
                                     </template>
                                 </div>
@@ -276,6 +276,14 @@
                 shareUrl: '',
                 shareTitle: '',
                 copied: false,
+
+                highlightText(text, query) {
+                    if (!query || !text) return text;
+                    const escapedText = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    const regex = new RegExp(`(${escapedQuery})`, 'gi');
+                    return escapedText.replace(regex, '<mark class="bg-yellow-200 px-0.5 rounded">$1</mark>');
+                },
 
                 async fetchAspirations(reset = true) {
                     if (reset) {

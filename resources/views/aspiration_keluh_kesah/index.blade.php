@@ -145,13 +145,13 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                                 </svg>
-                                <span x-text="msg.phone_number"></span>
+                                <span x-html="highlightText(msg.phone_number, searchQuery)"></span>
                             </div>
 
                             <!-- Message Preview -->
                             <div class="relative">
                                 <p class="text-gray-700 text-sm line-clamp-3" :ref="'desc' + msg.id"
-                                    x-text="msg.keluh_kesah">
+                                    x-html="highlightText(msg.keluh_kesah, searchQuery)">
                                 </p>
 
                                 <!-- Gradient overlay untuk menunjukkan ada konten lebih lanjut -->
@@ -245,14 +245,14 @@
                         </svg>
                         <span class="font-semibold">Nomor Telepon:</span>
                     </div>
-                    <p class="text-gray-800 text-lg font-medium" x-text="currentMessage?.phone_number"></p>
+                    <p class="text-gray-800 text-lg font-medium" x-html="highlightText(currentMessage?.phone_number, searchQuery)"></p>
                 </div>
 
                 <!-- Message Content -->
                 <div class="mb-6">
                     <h3 class="font-semibold text-gray-700 mb-3">Keluh Kesah:</h3>
                     <div class="bg-gray-50 rounded-lg p-4">
-                        <p class="text-gray-700 whitespace-pre-wrap" x-text="currentMessage?.keluh_kesah"></p>
+                        <p class="text-gray-700 whitespace-pre-wrap" x-html="highlightText(currentMessage?.keluh_kesah, searchQuery)"></p>
                     </div>
                 </div>
 
@@ -392,6 +392,14 @@
                 shareUrl: '',
                 shareTitle: '',
                 copied: false,
+
+                highlightText(text, query) {
+                    if (!query || !text) return text;
+                    const escapedText = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    const regex = new RegExp(`(${escapedQuery})`, 'gi');
+                    return escapedText.replace(regex, '<mark class="bg-yellow-200 px-0.5 rounded">$1</mark>');
+                },
 
                 async fetchMessages(reset = true) {
                     if (reset) {
