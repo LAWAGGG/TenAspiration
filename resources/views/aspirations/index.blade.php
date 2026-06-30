@@ -632,7 +632,10 @@
                     if (!key) return 'Aspirasi';
                     const questionsMap = @json($questions);
                     const found = questionsMap.find(q => q.question_key === key);
-                    return found ? found.question_label : key;
+                    if (found) return found.question_label;
+                    // Key tidak ditemukan di pertanyaan aktif — pertanyaan sudah dihapus
+                    // Tampilkan key apa adanya (sudah human-readable) + label dihapus
+                    return key + ' (dihapus)';
                 },
 
                 async fetchAspirations(reset = true) {

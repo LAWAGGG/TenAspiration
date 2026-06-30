@@ -26,10 +26,11 @@ class FormQuestionController extends Controller
             FormQuestion::resetToDefault($formType, $entityId);
             
             foreach ($validated['questions'] as $index => $question) {
+                $key = self::resolveQuestionKey($question['question_key'], $question['question_label']);
                 FormQuestion::create([
                     'form_type' => $formType,
                     'entity_id' => $entityId,
-                    'question_key' => $question['question_key'],
+                    'question_key' => $key,
                     'question_label' => $question['question_label'],
                     'placeholder' => $question['placeholder'] ?? null,
                     'is_required' => $question['is_required'] ?? true,
@@ -48,10 +49,11 @@ class FormQuestionController extends Controller
         FormQuestion::resetToDefault($formType, null);
         
         foreach ($validated['questions'] as $index => $question) {
+            $key = self::resolveQuestionKey($question['question_key'], $question['question_label']);
             FormQuestion::create([
                 'form_type' => $formType,
                 'entity_id' => null,
-                'question_key' => $question['question_key'],
+                'question_key' => $key,
                 'question_label' => $question['question_label'],
                 'placeholder' => $question['placeholder'] ?? null,
                 'is_required' => $question['is_required'] ?? true,
@@ -66,6 +68,33 @@ class FormQuestionController extends Controller
 
         return Redirect::route($redirectRoutes[$formType] ?? 'dashboard')
             ->with('success', 'Pertanyaan berhasil diperbarui');
+    }
+
+    /**
+     * Jika question_key masih berupa timestamp random (custom_XXXXXXXXXX),
+     * ganti dengan label yang di-lowercase dan di-slug-kan agar human-readable
+     * dan tersimpan permanen di kolom `to` pada aspirations.
+     */
+    private static function resolveQuestionKey(string $currentKey, string $label): string
+    {
+        // Jika key masih dalam format custom_<timestamp> (13 digit angka), generate dari label
+        if (preg_match('/^custom_\d{10,}$/', $currentKey)) {
+            return self::labelToKey($label);
+        }
+        // Key sudah bermakna (built-in atau sudah di-set manual), pertahankan
+        return $currentKey;
+    }
+
+    /**
+     * Konversi label menjadi key: lowercase, spasi → underscore, strip karakter non-alphanumeric.
+     * Contoh: "Wakil Kesiswaan" → "wakil_kesiswaan"
+     */
+    private static function labelToKey(string $label): string
+    {
+        $key = mb_strtolower(trim($label));
+        $key = preg_replace('/\s+/', '_', $key);
+        $key = preg_replace('/[^\w]/', '', $key);
+        return $key ?: 'pertanyaan';
     }
 
     public function reset(string $formType, ?int $entityId = null)
