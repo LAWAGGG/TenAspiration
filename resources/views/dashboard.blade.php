@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Admin Dashboard</title>
+    <link rel="icon" href="{{ asset('images/logo-mpk.jpg') }}" type="image/jpeg">
     @vite('resources/css/app.css')
     <script src="//unpkg.com/alpinejs" defer></script>
 </head>
@@ -25,13 +26,7 @@
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between items-center py-4 md:py-6">
                     <div class="flex items-center space-x-3">
-                        <div class="bg-red-500 p-2 rounded-lg">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white md:h-6 w-6" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
-                        </div>
+                        <img src="{{ asset('images/logo-mpk.jpg') }}" alt="Logo MPK" class="h-10 w-10 rounded-lg object-cover shadow-sm">
                         <div class="hidden sm:block">
                             <h1 class="text-xl md:text-2xl font-bold text-gray-900">TenAspiration</h1>
                             <p class="text-xs md:text-sm text-gray-500">Admin Dashboard</p>
