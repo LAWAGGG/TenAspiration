@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Aspiration;
+use App\Models\FormQuestion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -22,12 +23,15 @@ class AspirationController extends Controller
 
     public function aspirationForm()
     {
-        return view('aspiration_forms.voxes-form');
+        $questions = FormQuestion::getForForm('audiensi');
+        return view('aspiration_forms.voxes-form', compact('questions'));
     }
 
     public function index()
     {
-        return view('aspirations.index');
+        $questions = FormQuestion::getForForm('audiensi');
+        $defaultQuestions = FormQuestion::getDefaults()['audiensi'];
+        return view('aspirations.index', compact('questions', 'defaultQuestions'));
     }
 
     public function fetchPaginated(Request $request)

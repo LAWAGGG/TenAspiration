@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Aspiration;
 use App\Models\AspirationKeluhKesah;
 use App\Models\Event;
+use App\Models\FormQuestion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -30,7 +31,12 @@ class EventController extends Controller
     public function getEvent()
     {
         $events = Event::latest()->get();
-        return view('aspiration_forms.event-form', compact('events'));
+        $defaultQuestions = FormQuestion::getForForm('event');
+        $eventQuestions = [];
+        foreach ($events as $event) {
+            $eventQuestions[$event->id] = FormQuestion::getForForm('event', $event->id);
+        }
+        return view('aspiration_forms.event-form', compact('events', 'defaultQuestions', 'eventQuestions'));
     }
 
     public function store(Request $request)

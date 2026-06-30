@@ -41,15 +41,9 @@
                     <select x-model="filterBagian" @change="applyFilter()"
                         class="flex-1 md:flex-none px-3 py-2 rounded-lg bg-white border border-red-200 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-red-400">
                         <option value="">Semua</option>
-                        <option value="wakil kesiswaan">Wakil Kesiswaan</option>
-                        <option value="wakil sarpras">Wakil Sarpras</option>
-                        <option value="wakil kurikulum">Wakil Kurikulum</option>
-                        <option value="wakil humas">Wakil Humas</option>
-                        <option value="tata usaha">Tata Usaha</option>
-                        <option value="Ekskul">Ekskul</option>
-                        <option value="MPK">MPK</option>
-                        <option value="OSIS">OSIS</option>
-                        <option value="umum">Umum</option>
+                        <template x-for="opt in bagianOptions" :key="opt.value">
+                            <option :value="opt.value" x-text="opt.label"></option>
+                        </template>
                     </select>
                 </div>
 
@@ -196,30 +190,17 @@
                     }" x-init="checkOverflow()">
                     <div class="p-5 flex-1">
                         <div class="mb-4">
-                            <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full mb-3"
-                                :class="{
-                                    'bg-blue-100 text-blue-700': msg.topic === 'akademik',
-                                    'bg-amber-100 text-amber-700': msg.topic === 'fasilitas',
-                                    'bg-purple-100 text-purple-700': msg.topic === 'non-akademik',
-                                    'bg-green-100 text-green-700': msg.topic === 'lingkungan',
-                                    'bg-cyan-100 text-cyan-700': msg.topic === 'pelayanan',
-                                    'bg-gray-100 text-gray-700': !msg.topic || msg.topic === 'lainnya'
-                                }"
-                                x-text="getTopicLabel(msg.topic)">
-                            </span>
-
-                            <div class="flex items-center gap-2 text-sm text-gray-700 mb-3">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                                    stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                                </svg>
-                                <span x-text="msg.phone_number"></span>
-                            </div>
+                            <template x-if="questions.length > 0">
+                                <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full mb-3 bg-red-100 text-red-700"
+                                    x-text="questions[0].question_label">
+                                </span>
+                            </template>
 
                             <div class="relative">
-                                <p class="text-gray-700 text-sm line-clamp-3" :ref="'desc' + msg.id"
-                                    x-text="msg.keluh_kesah"></p>
+                                <template x-if="questions.length > 0">
+                                    <p class="text-gray-700 text-sm line-clamp-3" :ref="'desc' + msg.id"
+                                        x-text="getAnswer(msg, questions[0].question_key)"></p>
+                                </template>
                                 <div x-show="isContentOverflowing"
                                     class="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-white to-transparent">
                                 </div>
@@ -230,7 +211,7 @@
                         <div class="flex justify-between items-center">
                             <p class="text-xs text-gray-500" x-text="formatDate(msg.created_at)"></p>
                             <div class="text-xs text-gray-400">
-                                <span x-text="getTopicIcon(msg.topic)"></span>
+                                <span x-text="questions.length > 1 ? '+' + (questions.length - 1) + ' lagi' : ''"></span>
                             </div>
                         </div>
                     </div>
@@ -247,40 +228,25 @@
                             class="bg-white rounded-xl shadow-md overflow-hidden border-l-4 border-red-500 hover:shadow-lg transition-all duration-300 flex flex-col">
                             <div class="p-6 flex-1 flex flex-col">
                                 <div class="flex items-start justify-between mb-3">
-                                    <h3 class="text-lg font-semibold text-red-600">Kritik, Saran & Masukkan</h3>
+                                    <h3 class="text-lg font-semibold text-red-600" x-text="questions && questions.length > 0 ? questions[0].question_label : 'Aspirasi'"></h3>
                                 </div>
 
                                 <div class="mb-4 flex-1">
                                     <p class="text-gray-800 text-sm leading-relaxed"
                                         :class="open ? '' : 'line-clamp-3'"
-                                        x-text="asp.message"></p>
+                                        x-text="questions && questions.length > 0 ? getAnswer(asp, questions[0].question_key) : (asp.message || '')"></p>
                                 </div>
 
                                 <div x-show="open" x-transition class="space-y-4 mb-4">
-                                    <template x-if="asp.kesan_pesan">
-                                        <div class="bg-red-50 rounded-lg p-3 border border-red-100">
-                                            <h4 class="text-sm font-semibold text-red-700 mb-2 flex items-center gap-2">
-                                                🎯 Kesan & Pesan
-                                            </h4>
-                                            <p class="text-gray-700 text-sm leading-relaxed" x-text="asp.kesan_pesan"></p>
-                                        </div>
-                                    </template>
-                                    <template x-if="asp.bad_moment">
-                                        <div class="bg-amber-50 rounded-lg p-3 border border-amber-100">
-                                            <h4 class="text-sm font-semibold text-amber-700 mb-2 flex items-center gap-2">
-                                                ⚠️ Kejadian buruk
-                                            </h4>
-                                            <p class="text-gray-700 text-sm leading-relaxed" x-text="asp.bad_moment"></p>
-                                        </div>
-                                    </template>
-                                    <template x-if="asp.perubahan_dari_event">
-                                        <div class="bg-blue-50 rounded-lg p-3 border border-blue-100">
-                                            <h4 class="text-sm font-semibold text-blue-700 mb-2 flex items-center gap-2">
-                                                ⚡ Perubahan dari event
-                                            </h4>
-                                            <p class="text-gray-700 text-sm leading-relaxed"
-                                                x-text="asp.perubahan_dari_event"></p>
-                                        </div>
+                                    <template x-if="questions && questions.length > 1">
+                                        <template x-for="(q, idx) in questions.slice(1)" :key="q.question_key">
+                                            <div class="bg-red-50 rounded-lg p-3 border border-red-100">
+                                                <h4 class="text-sm font-semibold text-red-700 mb-2 flex items-center gap-2">
+                                                    🎯 <span x-text="q.question_label"></span>
+                                                </h4>
+                                                <p class="text-gray-700 text-sm leading-relaxed" x-text="getAnswer(asp, q.question_key)"></p>
+                                            </div>
+                                        </template>
                                     </template>
                                 </div>
 
@@ -347,23 +313,14 @@
                 </button>
             </div>
             <div class="p-6" x-show="currentMessage">
-                <div class="mb-6 p-4 bg-red-50 rounded-lg">
-                    <div class="flex items-center gap-2 text-gray-700 mb-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                        </svg>
-                        <span class="font-semibold">Nomor Telepon:</span>
+                <template x-for="q in questions" :key="q.question_key">
+                    <div class="mb-6">
+                        <div class="p-4 bg-red-50 rounded-lg">
+                            <h3 class="font-semibold text-gray-700 mb-2" x-text="q.question_label"></h3>
+                            <p class="text-gray-800 whitespace-pre-wrap" x-text="getAnswer(currentMessage, q.question_key)"></p>
+                        </div>
                     </div>
-                    <p class="text-gray-800 text-lg font-medium" x-text="currentMessage?.phone_number"></p>
-                </div>
-                <div class="mb-6">
-                    <h3 class="font-semibold text-gray-700 mb-3">Keluh Kesah:</h3>
-                    <div class="bg-gray-50 rounded-lg p-4">
-                        <p class="text-gray-700 whitespace-pre-wrap" x-text="currentMessage?.keluh_kesah"></p>
-                    </div>
-                </div>
+                </template>
                 <div class="text-sm text-gray-600">
                     <div class="flex items-center gap-2">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -393,6 +350,8 @@
                 loading: true,
                 type: '',
                 title: '',
+                questions: [],
+                bagianOptions: [],
                 searchQuery: '',
                 filterBagian: '',
                 filterKelas: '',
@@ -410,6 +369,8 @@
                         this.filteredData = result.data;
                         this.type = result.type;
                         this.title = result.share.title;
+                        this.questions = result.questions || [];
+                        this.bagianOptions = result.bagianOptions || [];
                     } catch (error) {
                         console.error('Gagal memuat data:', error);
                     } finally {
@@ -428,12 +389,24 @@
                                     || (item.to || '').toLowerCase().includes(q)
                                     || (item.kelas || '').toLowerCase().includes(q);
                             } else if (this.type === 'keluh_kesah') {
-                                return (item.keluh_kesah || '').toLowerCase().includes(q)
+                                const match = (item.keluh_kesah || '').toLowerCase().includes(q)
                                     || (item.phone_number || '').toLowerCase().includes(q);
+                                if (match) return true;
+                                if (item.custom_answers) {
+                                    const answers = typeof item.custom_answers === 'string' ? JSON.parse(item.custom_answers) : item.custom_answers;
+                                    return Object.values(answers).some(v => (v || '').toLowerCase().includes(q));
+                                }
+                                return false;
                             } else if (this.type === 'aspiration_event') {
-                                return (item.message || '').toLowerCase().includes(q)
+                                const match = (item.message || '').toLowerCase().includes(q)
                                     || (item.kesan_pesan || '').toLowerCase().includes(q)
                                     || (item.perubahan_dari_event || '').toLowerCase().includes(q);
+                                if (match) return true;
+                                if (item.custom_answers) {
+                                    const answers = typeof item.custom_answers === 'string' ? JSON.parse(item.custom_answers) : item.custom_answers;
+                                    return Object.values(answers).some(v => (v || '').toLowerCase().includes(q));
+                                }
+                                return false;
                             }
                             return true;
                         });
@@ -494,6 +467,27 @@
                         'lainnya': '📌',
                     };
                     return icons[topic] || '📌';
+                },
+
+                getAnswer(msg, key) {
+                    const builtInKeys = ['keluh_kesah', 'phone_number'];
+                    
+                    // Untuk aspiration_event, tambah juga built-in keys nya
+                    if (this.type === 'aspiration_event') {
+                        const eventBuiltInKeys = ['message', 'kesan_pesan', 'bad_moment', 'perubahan_dari_event'];
+                        if (eventBuiltInKeys.includes(key)) {
+                            return msg[key] || '';
+                        }
+                    }
+                    
+                    if (builtInKeys.includes(key)) {
+                        return msg[key] || '';
+                    }
+                    if (msg.custom_answers) {
+                        const answers = typeof msg.custom_answers === 'string' ? JSON.parse(msg.custom_answers) : msg.custom_answers;
+                        return answers[key] || '';
+                    }
+                    return '';
                 },
 
                 formatDate(date) {

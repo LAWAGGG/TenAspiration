@@ -4,12 +4,19 @@ namespace App\Http\Controllers;
 
 use App\Models\AspirationEvent;
 use App\Models\Event;
+use App\Models\FormQuestion;
 use Illuminate\Http\Request;
 
 class AspirationEventController extends Controller
 {
      public function aspirationForm(){
-        return view('aspiration_forms.event-form');
+        $events = Event::withCount('aspiration')->get();
+        $defaultQuestions = FormQuestion::getForForm('event');
+        $eventQuestions = [];
+        foreach ($events as $event) {
+            $eventQuestions[$event->id] = FormQuestion::getForForm('event', $event->id);
+        }
+        return view('aspiration_forms.event-form', compact('events', 'defaultQuestions', 'eventQuestions'));
     }
 
     public function index()
@@ -21,84 +28,44 @@ class AspirationEventController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            "message" => "required",
-            "kesan_pesan" => "required",
-            "perubahan_dari_event" => "required",
-            "event_id" => "required|exists:events,id",
-            "bad_moment" => "nullable|string",
-        ]);
+        $eventId = $request->event_id;
+        $questions = FormQuestion::getForForm('event', $eventId);
 
-        $badWords = [
-            "anjing",
-            "bangsat",
-            "goblok",
-            "kontol",
-            "bego",
-            "jing",
-            "jir",
-            "qontol",
-            "puqi",
-            "anjay",
-            "anjir",
-            "a n j i n g",
-            "tolol",
-            "monyet",
-            "babi",
-            "memek",
-            "pepek",
-            "puki",
-            "jancuk",
-            "jancok",
-            "kampret",
-            "kntl",
-            "kntol",
-            "kintil",
-            "pantek",
-            "panteq",
-            "bajingan",
-            "badjingan",
-            "fuck",
-            "shit",
-            "asshole",
-            "anying",
-            "lonte",
-            "kontoI",
-            "4njing",
-            "babl",
-            "bacot",
-            "anj1ng",
-            "m3m3k",
-            "ngentod",
-            "toloI",
-        ];
-
-        foreach ($badWords as $word) {
-            if (stripos($request->message, $word) !== false) {
-                return back()->withErrors(['message' => "Pesan mengandung kata {$word}! tolong diubah"])->withInput();
-            }
-            if (stripos($request->bad_moment, $word) !== false) {
-                return back()->withErrors(['message' => "Pesan mengandung kata {$word}! tolong diubah"])->withInput();
-            }
-            if (stripos($request->kesan_pesan, $word) !== false) {
-                return back()->withErrors(['message' => "Pesan mengandung kata {$word}! tolong diubah"])->withInput();
-            }
-            if (stripos($request->perubahan_dari_event, $word) !== false) {
-                return back()->withErrors(['message' => "Pesan mengandung kata {$word}! tolong diubah"])->withInput();
+        $rules = ['event_id' => 'required|exists:events,id'];
+        foreach ($questions as $q) {
+            $key = $q['question_key'];
+            if ($q['is_required']) {
+                $rules[$key] = 'required|string';
+            } else {
+                $rules[$key] = 'nullable|string';
             }
         }
 
-        AspirationEvent::create([
-            "message" => $request->message,
-            "kesan_pesan" => $request->kesan_pesan,
-            "perubahan_dari_event" => $request->perubahan_dari_event,
-            "event_id" => $request->event_id,
-            "bad_moment" => $request->bad_moment,
-        ]);
+        $request->validate($rules);
+
+        $extracted = FormQuestion::extractAnswers('event', $request->all());
+        $data = $extracted['regular'];
+        $data['event_id'] = $eventId;
+        $data['custom_answers'] = !empty($extracted['custom']) ? $extracted['custom'] : null;
+
+        $badWords = [
+            "anjing","bangsat","goblok","kontol","bego","jing","jir","qontol","puqi","anjay","anjir","a n j i n g",
+            "tolol","monyet","babi","memek","pepek","puki","jancuk","jancok","kampret","kntl","kntol","kintil",
+            "pantek","panteq","bajingan","badjingan","fuck","shit","asshole","anying","lonte","kontoI","4njing","babl","bacot",
+        ];
+
+        foreach ($extracted['regular'] as $key => $value) {
+            foreach ($badWords as $word) {
+                if (stripos($value, $word) !== false) {
+                    return back()->withErrors(['message' => "Pesan mengandung kata {$word}! tolong diubah"])->withInput();
+                }
+            }
+        }
+
+        AspirationEvent::create($data);
 
         return redirect()->back()->with('success', 'Aspirasi event berhasil dikirim!');
     }
-
 
     public function show($id)
     {
@@ -116,22 +83,22 @@ class AspirationEventController extends Controller
 
     public function update(Request $request, $id)
     {
-        $request->validate([
-            "message" => "required",
-            "kesan_pesan" => "required",
-            "perubahan_dari_event" => "required",
-            "event_id" => "required|exists:events,id",
-            "bad_moment" => "nullable|string|max:255",
-        ]);
-
         $aspiration = AspirationEvent::findOrFail($id);
-        $aspiration->update([
-            "message" => $request->message,
-            "kesan_pesan" => $request->kesan_pesan,
-            "perubahan_dari_event" => $request->perubahan_dari_event,
-            "event_id" => $request->event_id,
-            "bad_moment" => $request->bad_moment,
-        ]);
+        $questions = FormQuestion::getForForm('event', $aspiration->event_id);
+
+        $rules = [];
+        foreach ($questions as $q) {
+            $key = $q['question_key'];
+            $rules[$key] = $q['is_required'] ? 'required|string' : 'nullable|string';
+        }
+
+        $request->validate($rules);
+
+        $extracted = FormQuestion::extractAnswers('event', $request->all());
+        $data = $extracted['regular'];
+        $data['custom_answers'] = !empty($extracted['custom']) ? $extracted['custom'] : null;
+
+        $aspiration->update($data);
 
         return redirect()->route('aspiration_events.index')->with('success', 'Aspirasi event berhasil diperbarui!');
     }
@@ -150,20 +117,28 @@ class AspirationEventController extends Controller
     {
         $event = Event::where('id', $eventId)->first();
         $eventName = $event->name ?? 'Event Tidak Dikenal';
+        $questions = FormQuestion::getForForm('event', $eventId);
+        $defaultQuestions = FormQuestion::getDefaults()['event'];
 
-        return view('aspiration_events.by_event', compact('eventId', 'eventName'));
+        return view('aspiration_events.by_event', compact('eventId', 'eventName', 'questions', 'defaultQuestions'));
     }
 
     public function fetchPaginatedByEvent(Request $request, $eventId)
     {
         $query = AspirationEvent::where('event_id', $eventId)->with(['event']);
+        $questions = FormQuestion::getForForm('event', $eventId);
 
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('message', 'like', "%{$search}%")
-                  ->orWhere('kesan_pesan', 'like', "%{$search}%")
-                  ->orWhere('perubahan_dari_event', 'like', "%{$search}%");
+            $query->where(function ($q) use ($search, $questions) {
+                foreach ($questions as $question) {
+                    $key = $question['question_key'];
+                    $builtIn = FormQuestion::isBuiltInKey('event', $key);
+                    if ($builtIn) {
+                        $q->orWhere($key, 'like', "%{$search}%");
+                    }
+                }
+                $q->orWhere('custom_answers', 'like', "%{$search}%");
             });
         }
         if ($request->filled('dateFrom')) {
@@ -183,12 +158,18 @@ class AspirationEventController extends Controller
     public function exportCsv(Request $request, $eventId)
     {
         $query = AspirationEvent::where("event_id", $eventId)->with(['event']);
+        $questions = FormQuestion::getForForm('event', $eventId);
 
         if ($request->filled('search')) {
-            $query->where(function ($q) use ($request) {
-                $q->where('message', 'like', '%' . $request->search . '%')
-                  ->orWhere('kesan_pesan', 'like', '%' . $request->search . '%')
-                  ->orWhere('perubahan_dari_event', 'like', '%' . $request->search . '%');
+            $search = $request->search;
+            $query->where(function ($q) use ($search, $questions) {
+                foreach ($questions as $question) {
+                    $key = $question['question_key'];
+                    if (FormQuestion::isBuiltInKey('event', $key)) {
+                        $q->orWhere($key, 'like', '%' . $search . '%');
+                    }
+                }
+                $q->orWhere('custom_answers', 'like', '%' . $search . '%');
             });
         }
         if ($request->filled('date_from')) {
@@ -205,25 +186,32 @@ class AspirationEventController extends Controller
             return redirect()->back()->with('error', 'Belum ada aspirasi untuk event ini.');
         }
 
+        $columns = ["timestamps"];
+        foreach ($questions as $q) {
+            $columns[] = $q['question_label'];
+        }
+
         $headers = [
             "Content-Type" => "text/csv",
             "Content-Disposition" => "inline; filename=aspirations_event_{$eventName}.csv",
         ];
 
-        $columns = ["timestamps", "Kritik, Saran, Masukan", "Kejadian buruk yang didapati", "Kesan dan Pesan", "Perubahan dari event sebelumnya"];
-
-        return response()->stream(function () use ($aspirations, $columns) {
+        return response()->stream(function () use ($aspirations, $columns, $questions) {
             $handle = fopen("php://output", "w");
             fputcsv($handle, $columns, ";");
 
             foreach ($aspirations as $asp) {
-                fputcsv($handle, [
-                    $asp->created_at->timezone('Asia/Jakarta')->format('Y-m-d H:i:s'),
-                    $asp->message,
-                    $asp->bad_moment ?? "-",
-                    $asp->kesan_pesan,
-                    $asp->perubahan_dari_event,
-                ], ";");
+                $row = [$asp->created_at->timezone('Asia/Jakarta')->format('Y-m-d H:i:s')];
+                $customAnswers = $asp->custom_answers ?? [];
+                foreach ($questions as $q) {
+                    $key = $q['question_key'];
+                    if (FormQuestion::isBuiltInKey('event', $key)) {
+                        $row[] = $asp->{$key} ?? '-';
+                    } else {
+                        $row[] = $customAnswers[$key] ?? '-';
+                    }
+                }
+                fputcsv($handle, $row, ";");
             }
 
             fclose($handle);

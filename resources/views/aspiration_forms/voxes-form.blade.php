@@ -43,38 +43,8 @@
             showModal: @if (session('success')) true @else false @endif,
             hint: false,
             isLoading: false,
-            options: [{
-                    group: 'Wakil',
-                    items: [
-                        { value: 'wakil kesiswaan', label: 'Wakil Kesiswaan' },
-                        { value: 'wakil sarpras', label: 'Wakil Sarana Prasarana' },
-                        { value: 'wakil kurikulum', label: 'Wakil Kurikulum' },
-                        { value: 'wakil humas', label: 'Wakil Humas' }
-                    ]
-                },
-                {
-                    group: 'Tata Usaha',
-                    items: [
-                        { value: 'tata usaha', label: 'Tata Usaha' }
-                    ]
-                },
-                {
-                    group: 'Organisasi',
-                    items: [
-                        { value: 'OSIS', label: 'OSIS' },
-                        { value: 'MPK', label: 'MPK' },
-                        { value: 'Ekskul', label: 'Ekskul' }
-                    ]
-                },
-                {
-                    group: 'Umum',
-                    items: [
-                        { value: 'umum', label: 'Umum' }
-                    ]
-                }
-            ]
+            questions: {{ json_encode($questions) }}
         }">
-
 
         <div class="absolute -top-20 -right-20 w-40 h-40 rounded-full bg-red-100 opacity-30"></div>
         <div class="absolute -bottom-16 -left-16 w-32 h-32 rounded-full bg-red-100 opacity-30"></div>
@@ -124,21 +94,14 @@
                     </select>
                 </div>
 
-                {{-- Looping semua tujuan + textarea --}}
-                <template x-for="group in options" :key="group.group">
-                    <div>
-                        <h2 class="font-bold text-red-600 text-lg mb-2" x-text="group.group"></h2>
-
-                        <template x-for="item in group.items" :key="item.value">
-                            <div class="mb-4">
-                                <label class="text-sm font-medium text-gray-700 mb-2 block" x-text="item.label"></label>
-
-                                <textarea :name="'messages[' + item.value + ']'" placeholder="Tulis kritik, saran, dan masukan kepada bidang ini.."
-                                    rows="3" x-init="$el.value = oldMessages[item.value] ?? ''"
-                                    class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-300 focus:border-red-300 transition"
-                                    required></textarea>
-                            </div>
-                        </template>
+                {{-- Looping pertanyaan dinamis --}}
+                <template x-for="(q, index) in questions" :key="q.question_key">
+                    <div class="mb-4">
+                        <label class="text-sm font-medium text-gray-700 mb-2 block" x-text="q.question_label"></label>
+                        <textarea :name="'messages[' + q.question_key + ']'" :placeholder="q.placeholder"
+                            rows="3" x-init="$el.value = oldMessages[q.question_key] ?? ''"
+                            class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-300 focus:border-red-300 transition"
+                            :required="q.is_required"></textarea>
                     </div>
                 </template>
 

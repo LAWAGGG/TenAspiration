@@ -7,40 +7,123 @@
     <title>Daftar Aspirasi</title>
     @vite('resources/css/app.css')
     <script src="//unpkg.com/alpinejs" defer></script>
+    <style>
+        [x-cloak] { display: none !important; }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .card-fade-in { animation: fadeInUp 0.35s ease both; }
+        
+        /* Desktop filter backdrop */
+        .filter-backdrop {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 39;
+            height: 0;
+            overflow: visible;
+            pointer-events: none;
+        }
+        .filter-backdrop::after {
+            content: '';
+            display: block;
+            background: rgba(255,255,255,0.5);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #fecaca;
+            box-shadow: 0 2px 8px 0 rgba(0,0,0,0.07);
+        }
+
+        /* Mobile filter sticky */
+        .filter-bar-sticky-mobile {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 40;
+            padding: 0.5rem 1rem;
+            background: rgba(255,255,255,0.92);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #fecaca;
+            box-shadow: 0 2px 8px 0 rgba(0,0,0,0.07);
+        }
+
+        /* Hide scrollbar for mobile filter */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
 </head>
 
-<body class="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-100 py-10 px-4" x-data="aspirationApp()">
+<body class="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-100 py-10 px-4"
+    x-data="aspirationApp()" @scroll.window="onWindowScroll()" x-init="init()">
 
     <!-- Header -->
     <div class="max-w-4xl mx-auto mb-8">
         <!-- Title + Actions -->
         <div class="flex flex-col sm:flex-row items-center justify-between gap-3 mb-5">
             <h1 class="text-2xl font-bold text-red-700 flex items-center gap-2">
-                📜 Daftar Aspirasi
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Daftar Aspirasi
                 <span class="text-gray-500 font-normal text-lg" x-text="'(' + total + ')'"></span>
             </h1>
 
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 flex-wrap justify-center">
+                <button @click="showQuestionModal = true"
+                    class="px-3 py-1.5 bg-purple-600 text-white rounded-lg text-sm flex items-center gap-1.5 hover:bg-purple-700 transition font-medium shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Pertanyaan
+                </button>
+
                 <button @click="showShareModal = true"
                     class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm flex items-center gap-1.5 hover:bg-blue-700 transition font-medium shadow-sm">
-                    🔗 Share <span x-text="selectedIds.length > 0 ? selectedIds.length : ''"></span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                    </svg>
+                    Share <span x-text="selectedIds.length > 0 ? '(' + selectedIds.length + ')' : ''" class="ml-0.5"></span>
                 </button>
 
                 <button @click="showBulkDeleteModal = true" x-show="selectedIds.length > 0"
                     class="px-3 py-1.5 bg-red-600 text-white rounded-lg text-sm flex items-center gap-1.5 hover:bg-red-700 transition font-medium shadow-sm">
-                    🗑 Hapus <span x-text="selectedIds.length"></span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Hapus <span x-text="selectedIds.length"></span>
                 </button>
 
                 <button @click="exportCsv" :disabled="total === 0"
                     :class="total === 0 ? 'bg-gray-300 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600'"
                     class="px-3 py-1.5 text-white rounded-lg text-sm flex items-center gap-1.5 transition font-medium shadow-sm">
-                    📥 Export
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    Export
                 </button>
             </div>
         </div>
 
-        <!-- Filters Panel -->
-        <div class="bg-white/70 backdrop-blur-sm rounded-xl border border-red-200 shadow-sm p-3 md:p-4">
+        <!-- Desktop: Backdrop blur (hanya muncul saat sticky) -->
+        <div x-show="filterSticky" x-cloak class="filter-backdrop hidden md:block"
+            :style="'& ::after { height: ' + (filterBarHeight + 16) + 'px }'">
+        </div>
+
+        <!-- Desktop: Spacer supaya konten tidak loncat saat sticky -->
+        <div :style="filterSticky ? 'height:' + (filterBarHeight + 16) + 'px' : ''" class="transition-all duration-300 hidden md:block"></div>
+
+        <!-- Mobile: Spacer untuk sticky filter -->
+        <div :style="filterSticky ? 'height:' + filterBarHeight + 'px' : ''" class="transition-all duration-300 md:hidden"></div>
+
+        <!-- FILTER SECTION -->
+        <!-- Desktop Filter -->
+        <div x-ref="filterBar"
+            :style="filterSticky ? 'position:fixed; top:8px; left:0; right:0; z-index:40; width: calc(100% - 2rem); max-width: 56rem; margin: 0 auto; left: 50%; transform: translateX(-50%);' : ''"
+            class="hidden md:block bg-white/70 backdrop-blur-sm rounded-xl border border-red-200 shadow-sm p-3 md:p-4">
+
             <div class="flex flex-col md:flex-row md:items-center gap-3">
                 <!-- Search -->
                 <div class="relative md:min-w-[220px]">
@@ -49,7 +132,6 @@
                         class="w-full pl-3 pr-3 py-2 rounded-lg bg-white border border-red-200 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-red-400 placeholder:text-gray-400">
                 </div>
 
-                <!-- Divider (desktop) -->
                 <div class="hidden md:block w-px h-7 bg-red-200 shrink-0"></div>
 
                 <!-- Bagian -->
@@ -58,15 +140,9 @@
                     <select x-model="filterBagian" @change="onFilterChange()"
                         class="flex-1 md:flex-none px-3 py-2 rounded-lg bg-white border border-red-200 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-red-400">
                         <option value="">Semua</option>
-                        <option value="wakil kesiswaan">Wakil Kesiswaan</option>
-                        <option value="wakil sarpras">Wakil Sarpras</option>
-                        <option value="wakil kurikulum">Wakil Kurikulum</option>
-                        <option value="wakil humas">Wakil Humas</option>
-                        <option value="tata usaha">Tata Usaha</option>
-                        <option value="Ekskul">Ekskul</option>
-                        <option value="MPK">MPK</option>
-                        <option value="OSIS">OSIS</option>
-                        <option value="umum">Umum</option>
+                        <template x-for="q in bagianQuestions" :key="q.question_key">
+                            <option :value="q.question_key" x-text="q.question_label"></option>
+                        </template>
                     </select>
                 </div>
 
@@ -82,12 +158,10 @@
                     </select>
                 </div>
 
-                <!-- Divider (desktop) -->
                 <div class="hidden md:block w-px h-7 bg-red-200 shrink-0"></div>
 
                 <!-- Date Range -->
                 <div class="flex items-center gap-2">
-                    <span class="text-xs text-gray-500 font-medium shrink-0 w-12 md:w-auto">Tanggal</span>
                     <div class="flex items-center gap-1.5">
                         <input type="date" x-model="dateFrom" @change="onFilterChange()" title="Dari tanggal"
                             class="px-2 py-2 rounded-lg bg-white border border-red-200 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-red-400 w-[115px]">
@@ -105,6 +179,87 @@
                 </button>
             </div>
         </div>
+
+        <!-- Mobile Filter -->
+        <div :class="filterSticky ? 'filter-bar-sticky-mobile' : 'bg-white/70 backdrop-blur-sm rounded-xl border border-red-200 shadow-sm p-3'"
+            class="md:hidden" x-ref="filterBarMobile">
+
+            <!-- Collapsed bar (sticky) -->
+            <div x-show="filterSticky" class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2 min-w-0 flex-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-red-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
+                    </svg>
+                    <span class="text-sm font-medium text-gray-700">
+                        Filter
+                        <template x-if="searchQuery || filterBagian || filterKelas || dateFrom || dateTo">
+                            <span class="text-red-500 text-xs ml-1">(aktif)</span>
+                        </template>
+                    </span>
+                </div>
+                <button @click="filterExpanded = !filterExpanded"
+                    class="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 rounded-lg transition border border-red-200">
+                    <span x-text="filterExpanded ? 'Tutup' : 'Buka'"></span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 transition-transform" :class="filterExpanded ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Expanded filter content (mobile) -->
+            <div :class="filterSticky ? (filterExpanded ? 'mt-3 p-3 border-t border-red-100' : 'hidden') : ''"
+                class="flex flex-col gap-3">
+                <!-- Search -->
+                <div class="relative">
+                    <input type="text" x-model="searchQuery" @input.debounce.800ms="onFilterChange()"
+                        placeholder="Cari aspirasi..."
+                        class="w-full pl-3 pr-3 py-2 rounded-lg bg-white border border-red-200 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-red-400 placeholder:text-gray-400">
+                </div>
+
+                <!-- Bagian & Kelas row -->
+                <div class="flex gap-3">
+                    <div class="flex-1">
+                        <label class="text-xs text-gray-500 font-medium block mb-1">Bagian</label>
+                        <select x-model="filterBagian" @change="onFilterChange()"
+                            class="w-full px-3 py-2 rounded-lg bg-white border border-red-200 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-red-400">
+                            <option value="">Semua</option>
+                            <template x-for="q in bagianQuestions" :key="q.question_key">
+                                <option :value="q.question_key" x-text="q.question_label"></option>
+                            </template>
+                        </select>
+                    </div>
+                    <div class="flex-1">
+                        <label class="text-xs text-gray-500 font-medium block mb-1">Kelas</label>
+                        <select x-model="filterKelas" @change="onFilterChange()"
+                            class="w-full px-3 py-2 rounded-lg bg-white border border-red-200 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-red-400">
+                            <option value="">Semua</option>
+                            <option value="X">Kelas X</option>
+                            <option value="XI">Kelas XI</option>
+                            <option value="XII">Kelas XII</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Date Range -->
+                <div class="flex items-center gap-2">
+                    <label class="text-xs text-gray-500 font-medium shrink-0">Tanggal</label>
+                    <div class="flex items-center gap-1.5 flex-1">
+                        <input type="date" x-model="dateFrom" @change="onFilterChange()" title="Dari tanggal"
+                            class="flex-1 px-2 py-2 rounded-lg bg-white border border-red-200 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-red-400 min-w-0">
+                        <span class="text-gray-400 text-xs">—</span>
+                        <input type="date" x-model="dateTo" @change="onFilterChange()" title="Sampai tanggal"
+                            class="flex-1 px-2 py-2 rounded-lg bg-white border border-red-200 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-red-400 min-w-0">
+                    </div>
+                </div>
+
+                <!-- Reset -->
+                <button @click="resetFilters()"
+                    x-show="searchQuery || filterBagian || filterKelas || dateFrom || dateTo"
+                    class="text-xs text-red-500 hover:text-red-700 font-medium transition px-2 py-1.5 rounded-lg hover:bg-red-50 text-left">
+                    ↺ Reset Filter
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- Content -->
@@ -117,7 +272,7 @@
 
         <!-- Data Cards -->
         <template x-for="asp in aspirations" :key="asp.id">
-            <div class="bg-white rounded-xl flex flex-col sm:flex-row justify-between shadow-md p-5 border-l-8 hover:shadow-lg transition w-full sm:w-[48%] lg:w-[31%]"
+            <div class="card-fade-in bg-white rounded-xl flex flex-col sm:flex-row justify-between shadow-md p-5 border-l-8 hover:shadow-lg transition w-full sm:w-[48%] lg:w-[31%]"
                 :class="[asp.to === 'MPK' ? 'border-red-600' : asp.to === 'OSIS' ? 'border-blue-500' :
                     'border-gray-400', selectedIds.includes(asp.id) ? 'ring-2 ring-red-400' : ''
                 ]">
@@ -127,15 +282,16 @@
                         class="mt-1 h-4 w-4 rounded border-gray-300 text-red-600 focus:ring-red-500 cursor-pointer shrink-0">
 
                     <div class="flex-1 min-w-0">
-                        <h3 class="text-lg font-semibold"
-                            :class="asp.to === 'MPK' ? 'text-red-700' : asp.to === 'OSIS' ? 'text-blue-700' :
-                                'text-black'">
-                            🎯 <span x-html="highlightText(asp.to, searchQuery)"></span>
+                        <h3 class="text-base font-semibold flex items-center gap-1.5"
+                            :class="asp.to === 'MPK' ? 'text-red-700' : asp.to === 'OSIS' ? 'text-blue-700' : 'text-gray-800'">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
+                            </svg>
+                            <span x-html="highlightText(getQuestionLabel(asp.to), searchQuery)"></span>
                         </h3>
-                        <p class="text-gray-700 mt-1 break-words" x-html="highlightText(asp.message, searchQuery)"></p>
-                        <p class="text-gray-700 mt-1" x-text="asp.kelas"></p>
-                        <p class="text-xs text-gray-500 mt-3" x-text="asp.created_at ? formatDate(asp.created_at) : ''">
-                        </p>
+                        <p class="text-gray-700 mt-1.5 break-words text-sm" x-html="highlightText(asp.message, searchQuery)"></p>
+                        <p class="text-gray-500 mt-1 text-xs" x-text="asp.kelas"></p>
+                        <p class="text-xs text-gray-400 mt-2" x-text="asp.created_at ? formatDate(asp.created_at) : ''"></p>
                     </div>
                 </div>
             </div>
@@ -232,7 +388,12 @@
         class="fixed inset-0 p-5 bg-opacity-50 flex justify-center items-center bg-black z-50 backdrop-blur-sm"
         @click.self="showShareModal = false">
         <div class="bg-white rounded-xl shadow-lg p-6 w-96">
-            <h2 class="text-lg font-semibold text-gray-800 mb-2">🔗 Share</h2>
+            <h2 class="text-lg font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                </svg>
+                Share
+            </h2>
             <p class="text-gray-500 text-sm mb-4">Buat link untuk membagikan <span class="font-bold text-blue-600"
                     x-text="selectedIds.length > 0 ? selectedIds.length + ' aspirasi yang dipilih' : 'semua aspirasi'"></span>.</p>
 
@@ -251,7 +412,12 @@
                     <button @click="copyShareLink()"
                         class="px-3 py-2 rounded-lg text-sm font-medium transition shadow-sm"
                         :class="copied ? 'bg-green-500 text-white' : 'bg-blue-600 text-white hover:bg-blue-700'">
-                        <span x-text="copied ? '✓' : '📋'"></span>
+                        <svg x-show="!copied" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                        <svg x-show="copied" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
                     </button>
                 </div>
             </div>
@@ -264,10 +430,8 @@
                 <button @click="handleShare()" :disabled="shareLoading"
                     class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium flex items-center justify-center gap-2">
                     <template x-if="shareLoading">
-                        <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
-                            viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
-                            </circle>
+                        <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
                         </svg>
                     </template>
@@ -277,22 +441,124 @@
         </div>
     </div>
 
-    <!-- Back button -->
-    <div class="fixed right-5 bottom-5 bg-red-500 p-3 rounded-xl text-white">
-        <a href="{{ route('dashboard') }}" class="flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+    <!-- Question Management Modal -->
+    <div x-show="showQuestionModal" x-cloak
+        class="fixed inset-0 z-50 overflow-y-auto"
+        @click.self="showQuestionModal = false">
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div x-show="showQuestionModal" x-transition:enter="ease-out duration-300"
+                x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+                x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100"
+                x-transition:leave-end="opacity-0"
+                class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity"></div>
+
+            <div
+                class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white px-4 sm:px-6 pt-6 pb-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg sm:text-xl font-bold text-gray-900">Kelola Pertanyaan Audiensi</h3>
+                        <button @click="showQuestionModal = false" class="text-gray-400 hover:text-black">
+                            <svg class="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <p class="text-sm text-gray-500 mb-4">Ubah pertanyaan untuk form audiensi. Perubahan akan diterapkan secara global.</p>
+
+                    <form method="POST" action="{{ route('form_questions.update', 'audiensi') }}">
+                        @csrf
+                        @method('PUT')
+                        <div class="space-y-4 mb-4 max-h-96 overflow-y-auto">
+                            <template x-for="(q, index) in editQuestions" :key="index">
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-xs font-medium text-gray-500" x-text="'Pertanyaan ' + (index + 1)"></span>
+                                        <button type="button" @click="removeQuestion(index)"
+                                            class="text-red-500 hover:text-red-700 p-1" title="Hapus pertanyaan">
+                                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <div>
+                                            <label class="block text-xs font-medium text-gray-600 mb-1">Label Pertanyaan</label>
+                                            <input type="text" x-model="q.question_label" :name="'questions[' + index + '][question_label]'" required
+                                                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-purple-400">
+                                        </div>
+                                        <div>
+                                            <input type="hidden" :name="'questions[' + index + '][question_key]'" :value="q.question_key">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-medium text-gray-600 mb-1">Placeholder</label>
+                                            <input type="text" x-model="q.placeholder" :name="'questions[' + index + '][placeholder]'"
+                                                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-purple-400">
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <input type="checkbox" x-model="q.is_required" :name="'questions[' + index + '][is_required]'" value="1"
+                                                class="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500">
+                                            <label class="text-xs font-medium text-gray-600">Wajib diisi</label>
+                                            <input type="hidden" :name="'questions[' + index + '][is_required]'" value="0">
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+
+                        <div class="flex items-center gap-2 mb-4">
+                            <button type="button" @click="addQuestion()"
+                                class="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200 transition font-medium border border-gray-300">
+                                + Tambah Pertanyaan
+                            </button>
+                            <button type="button" @click="resetQuestions()"
+                                class="px-3 py-1.5 bg-orange-50 text-orange-600 rounded-lg text-sm hover:bg-orange-100 transition font-medium border border-orange-200">
+                                ↺ Reset ke Default
+                            </button>
+                        </div>
+
+                        <div class="flex justify-end space-x-3 pt-4 border-t border-gray-100">
+                            <button type="button" @click="showQuestionModal = false"
+                                class="px-3 py-2 sm:px-4 sm:py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition duration-200 font-medium text-sm sm:text-base">
+                                Batal
+                            </button>
+                            <button type="submit"
+                                class="px-4 py-2 sm:px-6 sm:py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition duration-200 font-medium text-sm sm:text-base">
+                                Simpan Pertanyaan
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Back button & Scroll to Top -->
+    <div class="fixed right-5 bottom-5 flex flex-col gap-2 z-30">
+        <button x-show="showScrollTop" x-cloak @click="window.scrollTo({top:0,behavior:'smooth'})"
+            class="bg-white border flex items-center gap-2 border-red-200 text-red-500 p-3 rounded-xl shadow-lg hover:bg-red-50 transition text-center"
+            title="Kembali ke atas">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
             </svg>
-            Kembali
+            <span class="hidden sm:inline">Ke atas</span>
+        </button>
+        <a href="{{ route('dashboard') }}"
+            class="bg-red-500 p-3 rounded-xl text-white shadow-lg hover:bg-red-600 transition flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            <span class="hidden sm:inline">Kembali</span>
         </a>
     </div>
 
     <script>
+        const defaultQuestionsAudiensi = @json($defaultQuestions);
+
         function aspirationApp() {
             return {
                 aspirations: [],
+                bagianQuestions: @json($questions),
                 currentPage: 1,
                 lastPage: 1,
                 total: 0,
@@ -314,6 +580,45 @@
                 shareUrl: '',
                 shareTitle: '',
                 copied: false,
+                showQuestionModal: false,
+                filterSticky: false,
+                filterExpanded: false,
+                filterBarHeight: 0,
+                showScrollTop: false,
+                editQuestions: @json($questions).map(q => ({
+                    question_key: q.question_key,
+                    question_label: q.question_label,
+                    placeholder: q.placeholder || '',
+                    is_required: q.is_required
+                })),
+
+                addQuestion() {
+                    this.editQuestions.push({
+                        question_key: 'custom_' + Date.now(),
+                        question_label: 'Pertanyaan Baru',
+                        placeholder: '',
+                        is_required: true
+                    });
+                },
+
+                removeQuestion(index) {
+                    if (this.editQuestions.length > 1) {
+                        this.editQuestions.splice(index, 1);
+                    }
+                },
+
+                resetQuestions() {
+                    if (confirm('Reset semua pertanyaan ke default?')) {
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = '{{ route('form_questions.reset', 'audiensi') }}';
+                        const csrf = document.createElement('input');
+                        csrf.type = 'hidden'; csrf.name = '_token'; csrf.value = '{{ csrf_token() }}';
+                        form.appendChild(csrf);
+                        document.body.appendChild(form);
+                        form.submit();
+                    }
+                },
 
                 highlightText(text, query) {
                     if (!query || !text) return text;
@@ -321,6 +626,13 @@
                     const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                     const regex = new RegExp(`(${escapedQuery})`, 'gi');
                     return escapedText.replace(regex, '<mark class="bg-yellow-200 px-0.5 rounded">$1</mark>');
+                },
+
+                getQuestionLabel(key) {
+                    if (!key) return 'Aspirasi';
+                    const questionsMap = @json($questions);
+                    const found = questionsMap.find(q => q.question_key === key);
+                    return found ? found.question_label : key;
                 },
 
                 async fetchAspirations(reset = true) {
@@ -535,16 +847,44 @@
 
                 init() {
                     this.fetchAspirations(true);
-                    this.setupScroll();
+                    this.$nextTick(() => {
+                        const filterBar = this.$refs.filterBar;
+                        const filterBarMobile = this.$refs.filterBarMobile;
+                        if (filterBar) {
+                            this.filterBarHeight = filterBar.offsetHeight;
+                        } else if (filterBarMobile) {
+                            this.filterBarHeight = filterBarMobile.offsetHeight;
+                        }
+                    });
+                },
+
+                onWindowScroll() {
+                    const scrollY = window.scrollY;
+                    this.showScrollTop = scrollY > 400;
+                    const threshold = 100;
+                    if (scrollY > threshold && !this.filterSticky) {
+                        const filterBar = this.$refs.filterBar;
+                        const filterBarMobile = this.$refs.filterBarMobile;
+                        if (filterBar) {
+                            this.filterBarHeight = filterBar.offsetHeight;
+                        } else if (filterBarMobile) {
+                            this.filterBarHeight = filterBarMobile.offsetHeight;
+                        }
+                        this.filterSticky = true;
+                        this.filterExpanded = false;
+                    } else if (scrollY <= threshold && this.filterSticky) {
+                        this.filterSticky = false;
+                        this.filterExpanded = false;
+                    }
+                    if (!this.loading && !this.loadingMore && this.currentPage < this.lastPage) {
+                        if (scrollY + window.innerHeight >= document.documentElement.scrollHeight - 200) {
+                            this.loadMore();
+                        }
+                    }
                 },
 
                 setupScroll() {
-                    window.addEventListener('scroll', () => {
-                        if (this.loading || this.loadingMore || this.currentPage >= this.lastPage) return;
-                        if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 200) {
-                            this.loadMore();
-                        }
-                    });
+                    // handled via @scroll.window in template
                 }
             }
         }

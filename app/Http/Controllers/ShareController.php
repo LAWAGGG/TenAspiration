@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Aspiration;
 use App\Models\AspirationEvent;
 use App\Models\AspirationKeluhKesah;
+use App\Models\FormQuestion;
 use App\Models\SharedLink;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -104,7 +105,8 @@ class ShareController extends Controller
                     $search = $filters['search'];
                     $query->where(function ($q) use ($search) {
                         $q->where('keluh_kesah', 'like', "%{$search}%")
-                          ->orWhere('phone_number', 'like', "%{$search}%");
+                          ->orWhere('phone_number', 'like', "%{$search}%")
+                          ->orWhere('custom_answers', 'like', "%{$search}%");
                     });
                 }
                 if (!empty($filters['dateFrom'])) {
@@ -118,10 +120,41 @@ class ShareController extends Controller
 
         $data = $query->orderByDesc('created_at')->get();
 
+        $questions = [];
+        if ($share->type === 'keluh_kesah') {
+            $questions = FormQuestion::getForForm('keluh_kesah');
+        } elseif ($share->type === 'aspiration') {
+            $questions = FormQuestion::getForForm('audiensi');
+        } elseif ($share->type === 'aspiration_event') {
+            $first = $data->first();
+            $eventId = $first ? $first->event_id : null;
+            if ($eventId) {
+                $questions = FormQuestion::getForForm('event', $eventId);
+            }
+        }
+
+        // Get available bagian/department options for audiensi filtering
+        $bagianOptions = [];
+        if ($share->type === 'aspiration') {
+            $bagianOptions = FormQuestion::where('form_type', 'audiensi')
+                ->whereNull('entity_id')
+                ->orderBy('order')
+                ->get(['question_key', 'question_label'])
+                ->map(function($q) {
+                    return [
+                        'value' => $q->question_key,
+                        'label' => $q->question_label,
+                    ];
+                })
+                ->toArray();
+        }
+
         return response()->json([
             'share' => $share,
             'data' => $data,
             'type' => $share->type,
+            'questions' => $questions,
+            'bagianOptions' => $bagianOptions,
         ]);
     }
 }

@@ -8,4 +8,8 @@ class AspirationKeluhKesah extends Model
 {
     protected $table = "aspiration_keluh_kesah";
     protected $guarded = [];
+
+    protected $casts = [
+        'custom_answers' => 'array',
+    ];
 }

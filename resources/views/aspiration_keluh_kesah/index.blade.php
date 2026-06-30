@@ -8,77 +8,132 @@
     @vite('resources/css/app.css')
     <script src="//unpkg.com/alpinejs" defer></script>
     <style>
+        [x-cloak] { display: none !important; }
         .line-clamp-3 {
             display: -webkit-box;
             -webkit-line-clamp: 3;
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
-
-        .modal-overlay {
-            background-color: rgba(0, 0, 0, 0.5);
+        .modal-overlay { background-color: rgba(0,0,0,0.5); }
+        .modal-content { max-height: 90vh; overflow-y: auto; }
+        .card-container { display: flex; flex-direction: column; height: 100%; }
+        .card-content { flex: 1; }
+        .card-footer { margin-top: auto; }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .card-fade-in { animation: fadeInUp 0.35s ease both; }
+        
+        /* Desktop filter backdrop */
+        .filter-backdrop {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 39;
+            height: 0;
+            overflow: visible;
+            pointer-events: none;
+        }
+        .filter-backdrop::after {
+            content: '';
+            display: block;
+            background: rgba(255,255,255,0.5);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #fecaca;
+            box-shadow: 0 2px 8px 0 rgba(0,0,0,0.07);
         }
 
-        .modal-content {
-            max-height: 90vh;
-            overflow-y: auto;
+        /* Mobile filter sticky */
+        .filter-bar-sticky-mobile {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 40;
+            padding: 0.5rem 1rem;
+            background: rgba(255,255,255,0.92);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #fecaca;
+            box-shadow: 0 2px 8px 0 rgba(0,0,0,0.07);
         }
 
-        [x-cloak] {
-            display: none !important;
+        /* Hide scrollbar for mobile filter */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
         }
-
-        .card-container {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-        }
-
-        .card-content {
-            flex: 1;
-        }
-
-        .card-footer {
-            margin-top: auto;
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
         }
     </style>
 </head>
 
-<body class="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-100 py-10 px-4" x-data="keluhKesahApp()">
+<body class="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-100 py-10 px-4"
+    x-data="keluhKesahApp()" @scroll.window="onWindowScroll()" x-init="init()">
 
     <!-- Header -->
     <div class="max-w-4xl mx-auto mb-8">
         <!-- Title + Actions -->
         <div class="flex flex-col sm:flex-row items-center justify-between gap-3 mb-5">
             <h1 class="text-2xl font-bold text-red-700 flex items-center gap-2">
-                📜 Daftar Keluh Kesah
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Daftar Keluh Kesah
                 <span class="text-gray-500 font-normal text-lg" x-text="'(' + total + ')'"></span>
             </h1>
 
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 flex-wrap justify-center">
+                <button @click="showQuestionModal = true"
+                    class="px-3 py-1.5 bg-purple-600 text-white rounded-lg text-sm flex items-center gap-1.5 hover:bg-purple-700 transition font-medium shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Pertanyaan
+                </button>
                 <button @click="showShareModal = true"
                     class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm flex items-center gap-1.5 hover:bg-blue-700 transition font-medium shadow-sm">
-                    🔗 Share <span x-text="selectedIds.length > 0 ? selectedIds.length : 'Semua'"></span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                    </svg>
+                    Share <span x-text="selectedIds.length > 0 ? '(' + selectedIds.length + ')' : 'Semua'" class="ml-0.5"></span>
                 </button>
 
                 <button @click="exportCsv" :disabled="total === 0"
                     :class="total === 0 ? 'bg-gray-300 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600'"
                     class="px-3 py-1.5 text-white rounded-lg text-sm flex items-center gap-1.5 transition font-medium shadow-sm">
-                    📥 Export
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    Export
                 </button>
             </div>
         </div>
 
-        <!-- Filters Panel -->
-        <div class="bg-white/70 backdrop-blur-sm rounded-xl border border-red-200 shadow-sm p-3 md:p-4">
+        <!-- Desktop: Backdrop blur (hanya muncul saat sticky) -->
+        <div x-show="filterSticky" x-cloak class="filter-backdrop hidden md:block"
+            :style="'& ::after { height: ' + (filterBarHeight + 16) + 'px }'">
+        </div>
+
+        <!-- Desktop: Spacer supaya konten tidak loncat saat sticky -->
+        <div :style="filterSticky ? 'height:' + (filterBarHeight + 16) + 'px' : ''" class="transition-all duration-300 hidden md:block"></div>
+
+        <!-- Mobile: Spacer untuk sticky filter -->
+        <div :style="filterSticky ? 'height:' + filterBarHeight + 'px' : ''" class="transition-all duration-300 md:hidden"></div>
+
+        <!-- FILTER SECTION -->
+        <!-- Desktop Filter -->
+        <div x-ref="filterBar"
+            :style="filterSticky ? 'position:fixed; top:8px; left:0; right:0; z-index:40; width: calc(100% - 2rem); max-width: 56rem; margin: 0 auto; left: 50%; transform: translateX(-50%);' : ''"
+            class="hidden md:block bg-white/70 backdrop-blur-sm rounded-xl border border-red-200 shadow-sm p-3 md:p-4">
+
             <div class="flex flex-col md:flex-row md:items-center gap-3">
                 <!-- Search -->
                 <div class="relative md:min-w-[220px]">
-                    <input type="text" x-model="searchQuery" @input.debounce.800ms="onFilterChange()" placeholder="Cari keluh kesah..."
+                    <input type="text" x-model="searchQuery" @input.debounce.800ms="onFilterChange()"
+                        placeholder="Cari keluh kesah..."
                         class="w-full pl-3 pr-3 py-2 rounded-lg bg-white border border-red-200 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-red-400 placeholder:text-gray-400">
                 </div>
 
-                <!-- Divider (desktop) -->
                 <div class="hidden md:block w-px h-7 bg-red-200 shrink-0"></div>
 
                 <!-- Date Range -->
@@ -101,6 +156,63 @@
                 </button>
             </div>
         </div>
+
+        <!-- Mobile Filter -->
+        <div :class="filterSticky ? 'filter-bar-sticky-mobile' : 'bg-white/70 backdrop-blur-sm rounded-xl border border-red-200 shadow-sm p-3'"
+            class="md:hidden" x-ref="filterBarMobile">
+
+            <!-- Collapsed bar (sticky) -->
+            <div x-show="filterSticky" class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2 min-w-0 flex-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-red-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
+                    </svg>
+                    <span class="text-sm font-medium text-gray-700">
+                        Filter
+                        <template x-if="searchQuery || dateFrom || dateTo">
+                            <span class="text-red-500 text-xs ml-1">(aktif)</span>
+                        </template>
+                    </span>
+                </div>
+                <button @click="filterExpanded = !filterExpanded"
+                    class="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 rounded-lg transition border border-red-200">
+                    <span x-text="filterExpanded ? 'Tutup' : 'Buka'"></span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 transition-transform" :class="filterExpanded ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Expanded filter content (mobile) -->
+            <div :class="filterSticky ? (filterExpanded ? 'mt-3 p-3 border-t border-red-100' : 'hidden') : ''"
+                class="flex flex-col gap-3">
+                <!-- Search -->
+                <div class="relative">
+                    <input type="text" x-model="searchQuery" @input.debounce.800ms="onFilterChange()"
+                        placeholder="Cari keluh kesah..."
+                        class="w-full pl-3 pr-3 py-2 rounded-lg bg-white border border-red-200 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-red-400 placeholder:text-gray-400">
+                </div>
+
+                <!-- Date Range -->
+                <div class="flex items-center gap-2">
+                    <label class="text-xs text-gray-500 font-medium shrink-0">Tanggal</label>
+                    <div class="flex items-center gap-1.5 flex-1">
+                        <input type="date" x-model="dateFrom" @change="onFilterChange()" title="Dari tanggal"
+                            class="flex-1 px-2 py-2 rounded-lg bg-white border border-red-200 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-red-400 min-w-0">
+                        <span class="text-gray-400 text-xs">—</span>
+                        <input type="date" x-model="dateTo" @change="onFilterChange()" title="Sampai tanggal"
+                            class="flex-1 px-2 py-2 rounded-lg bg-white border border-red-200 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-red-400 min-w-0">
+                    </div>
+                </div>
+
+                <!-- Reset -->
+                <button @click="resetFilters()"
+                    x-show="searchQuery || dateFrom || dateTo"
+                    class="text-xs text-red-500 hover:text-red-700 font-medium transition px-2 py-1.5 rounded-lg hover:bg-red-50 text-left">
+                    ↺ Reset Filter
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- Content -->
@@ -113,7 +225,7 @@
 
         <!-- Data Cards -->
         <template x-for="msg in messages" :key="msg.id">
-            <div class="bg-white rounded-xl shadow-md hover:shadow-lg transition w-full sm:w-[48%] lg:w-[31%] card-container cursor-pointer"
+            <div class="card-fade-in bg-white rounded-xl shadow-md hover:shadow-lg transition w-full sm:w-[48%] lg:w-[31%] card-container cursor-pointer"
                 @click="showDetail(msg.id)" x-data="{
                     isContentOverflowing: false,
                     checkOverflow() {
@@ -133,32 +245,36 @@
                             class="mt-1 h-4 w-4 rounded border-gray-300 text-red-600 focus:ring-red-500 cursor-pointer shrink-0">
 
                         <div class="flex-1 min-w-0">
-                            <!-- Topic Badge -->
-                            <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full mb-3"
-                                x-text="getTopicLabel(msg.topic)">
+                            <!-- Question Label Badge -->
+                            <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full mb-3 bg-red-100 text-red-700"
+                                x-text="editQuestions.length > 0 ? editQuestions[0].question_label : 'Keluh Kesah'">
                             </span>
 
-                            <!-- Phone Number -->
-                            <div class="flex items-center gap-2 text-sm text-gray-700 mb-3">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                                    stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                                </svg>
-                                <span x-html="highlightText(msg.phone_number, searchQuery)"></span>
-                            </div>
-
-                            <!-- Message Preview -->
-                            <div class="relative">
-                                <p class="text-gray-700 text-sm line-clamp-3" :ref="'desc' + msg.id"
-                                    x-html="highlightText(msg.keluh_kesah, searchQuery)">
-                                </p>
-
-                                <!-- Gradient overlay untuk menunjukkan ada konten lebih lanjut -->
-                                <div x-show="isContentOverflowing"
-                                    class="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-white to-transparent">
+                            <!-- Main Content Preview -->
+                            <template x-for="(q, idx) in editQuestions.slice(0, 2)" :key="q.question_key">
+                                <div class="mb-2">
+                                    <div x-show="idx > 0" class="text-xs text-gray-400 font-medium mb-1" x-text="q.question_label"></div>
+                                    <div class="relative" :class="idx > 0 ? '' : ''">
+                                        <p class="text-gray-700 text-sm line-clamp-3"
+                                            :ref="idx === 0 ? 'desc' + msg.id : ''"
+                                            x-html="highlightText(getAnswer(msg, q.question_key), searchQuery)">
+                                        </p>
+                                    </div>
                                 </div>
+                            </template>
+
+                            <!-- More questions indicator -->
+                            <div x-show="editQuestions.length > 2" class="text-xs text-gray-400 mt-1">
+                                <span x-text="'+' + (editQuestions.length - 2) + ' pertanyaan lagi'"></span>
                             </div>
+
+                            <!-- Gradient overlay untuk menunjukkan ada konten lebih lanjut -->
+                            <template x-if="editQuestions.length > 0">
+                                <div x-show="isContentOverflowing"
+                                    class="relative h-0">
+                                    <div class="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-white to-transparent"></div>
+                                </div>
+                            </template>
                         </div>
                     </div>
 
@@ -181,7 +297,9 @@
                         <p class="text-xs text-gray-500" x-text="formatDate(msg.created_at)"></p>
                         <!-- Topic indicator -->
                         <div class="text-xs text-gray-400">
-                            <span x-text="getTopicIcon(msg.topic)"></span>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                            </svg>
                         </div>
                     </div>
                 </div>
@@ -221,8 +339,8 @@
                 class="sticky top-0 bg-white p-6 border-b border-gray-200 rounded-t-xl flex justify-between items-center">
                 <div>
                     <h2 class="text-xl font-bold text-gray-800">Detail Keluh Kesah</h2>
-                    <span class="inline-block px-3 py-1 text-xs font-semibold rounded-full mt-2"
-                        x-text="currentMessage ? getTopicLabel(currentMessage.topic) : ''">
+                    <span class="inline-block px-3 py-1 text-xs font-semibold rounded-full mt-2 bg-red-100 text-red-700"
+                        x-text="editQuestions.length > 0 ? editQuestions[0].question_label : 'Keluh Kesah'">
                     </span>
                 </div>
                 <button @click="showModal = false" class="text-gray-500 hover:text-gray-700">
@@ -235,26 +353,14 @@
 
             <!-- Modal Body -->
             <div class="p-6" x-show="!detailLoading && currentMessage">
-                <!-- Phone Number -->
-                <div class="mb-6 p-4 bg-red-50 rounded-lg">
-                    <div class="flex items-center gap-2 text-gray-700 mb-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                            viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                        </svg>
-                        <span class="font-semibold">Nomor Telepon:</span>
+                <template x-for="(q, idx) in editQuestions" :key="q.question_key">
+                    <div class="mb-6">
+                        <div class="p-4 bg-red-50 rounded-lg">
+                            <h3 class="font-semibold text-gray-700 mb-2" x-text="q.question_label"></h3>
+                            <p class="text-gray-800 whitespace-pre-wrap" x-html="highlightText(getAnswer(currentMessage, q.question_key), searchQuery)"></p>
+                        </div>
                     </div>
-                    <p class="text-gray-800 text-lg font-medium" x-html="highlightText(currentMessage?.phone_number, searchQuery)"></p>
-                </div>
-
-                <!-- Message Content -->
-                <div class="mb-6">
-                    <h3 class="font-semibold text-gray-700 mb-3">Keluh Kesah:</h3>
-                    <div class="bg-gray-50 rounded-lg p-4">
-                        <p class="text-gray-700 whitespace-pre-wrap" x-html="highlightText(currentMessage?.keluh_kesah, searchQuery)"></p>
-                    </div>
-                </div>
+                </template>
 
                 <!-- Metadata -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
@@ -298,7 +404,12 @@
         class="fixed inset-0 p-5 bg-opacity-50 flex justify-center items-center bg-black z-50 backdrop-blur-sm"
         @click.self="showShareModal = false">
         <div class="bg-white rounded-xl shadow-lg p-6 w-96">
-            <h2 class="text-lg font-semibold text-gray-800 mb-2">🔗 Bagikan Keluh Kesah</h2>
+            <h2 class="text-lg font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                </svg>
+                Bagikan Keluh Kesah
+            </h2>
             <p class="text-gray-500 text-sm mb-4">Buat link untuk membagikan <span class="font-bold text-blue-600"
                     x-text="selectedIds.length > 0 ? selectedIds.length + ' keluh kesah yang dipilih' : 'semua keluh kesah yang cocok dengan filter'"></span>.</p>
 
@@ -316,7 +427,12 @@
                     <button @click="copyShareLink()"
                         class="px-3 py-2 rounded-lg text-sm font-medium transition shadow-sm"
                         :class="copied ? 'bg-green-500 text-white' : 'bg-blue-600 text-white hover:bg-blue-700'">
-                        <span x-text="copied ? '✓' : '📋'"></span>
+                        <svg x-show="!copied" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                        <svg x-show="copied" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
                     </button>
                 </div>
             </div>
@@ -329,10 +445,8 @@
                 <button @click="handleShare()" :disabled="shareLoading"
                     class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium flex items-center justify-center gap-2">
                     <template x-if="shareLoading">
-                        <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
-                            viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
-                            </circle>
+                        <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
                         </svg>
                     </template>
@@ -342,30 +456,124 @@
         </div>
     </div>
 
-    <!-- Back button -->
-    <div class="fixed right-5 bottom-5 bg-red-500 p-3 rounded-xl text-white shadow-lg">
+    <!-- Question Management Modal -->
+    <div x-show="showQuestionModal" x-cloak
+        class="fixed inset-0 z-50 overflow-y-auto"
+        @click.self="showQuestionModal = false">
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div x-show="showQuestionModal" x-transition:enter="ease-out duration-300"
+                x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+                x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100"
+                x-transition:leave-end="opacity-0"
+                class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity"></div>
+
+            <div
+                class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white px-4 sm:px-6 pt-6 pb-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg sm:text-xl font-bold text-gray-900">Kelola Pertanyaan Keluh Kesah</h3>
+                        <button @click="showQuestionModal = false" class="text-gray-400 hover:text-black">
+                            <svg class="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <p class="text-sm text-gray-500 mb-4">Ubah pertanyaan untuk form keluh kesah. Perubahan akan diterapkan secara global.</p>
+
+                    <form method="POST" action="{{ route('form_questions.update', 'keluh_kesah') }}">
+                        @csrf
+                        @method('PUT')
+                        <div class="space-y-4 mb-4 max-h-96 overflow-y-auto">
+                            <template x-for="(q, index) in editQuestions" :key="index">
+                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-xs font-medium text-gray-500" x-text="'Pertanyaan ' + (index + 1)"></span>
+                                        <button type="button" @click="removeQuestion(index)"
+                                            class="text-red-500 hover:text-red-700 p-1" title="Hapus pertanyaan">
+                                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <div>
+                                            <label class="block text-xs font-medium text-gray-600 mb-1">Label Pertanyaan</label>
+                                            <input type="text" x-model="q.question_label" :name="'questions[' + index + '][question_label]'" required
+                                                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-purple-400">
+                                        </div>
+                                        <div>
+                                            <input type="hidden" :name="'questions[' + index + '][question_key]'" :value="q.question_key">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-medium text-gray-600 mb-1">Placeholder</label>
+                                            <input type="text" x-model="q.placeholder" :name="'questions[' + index + '][placeholder]'"
+                                                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-purple-400">
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <input type="checkbox" x-model="q.is_required" :name="'questions[' + index + '][is_required]'" value="1"
+                                                class="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500">
+                                            <label class="text-xs font-medium text-gray-600">Wajib diisi</label>
+                                            <input type="hidden" :name="'questions[' + index + '][is_required]'" value="0">
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+
+                        <div class="flex items-center gap-2 mb-4">
+                            <button type="button" @click="addQuestion()"
+                                class="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200 transition font-medium border border-gray-300">
+                                + Tambah Pertanyaan
+                            </button>
+                            <button type="button" @click="resetQuestions()"
+                                class="px-3 py-1.5 bg-orange-50 text-orange-600 rounded-lg text-sm hover:bg-orange-100 transition font-medium border border-orange-200">
+                                ↺ Reset ke Default
+                            </button>
+                        </div>
+
+                        <div class="flex justify-end space-x-3 pt-4 border-t border-gray-100">
+                            <button type="button" @click="showQuestionModal = false"
+                                class="px-3 py-2 sm:px-4 sm:py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition duration-200 font-medium text-sm sm:text-base">
+                                Batal
+                            </button>
+                            <button type="submit"
+                                class="px-4 py-2 sm:px-6 sm:py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition duration-200 font-medium text-sm sm:text-base">
+                                Simpan Pertanyaan
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Back button & Scroll to Top -->
+    <div class="fixed right-5 bottom-5 flex flex-col gap-2 z-30">
+        <button x-show="showScrollTop" x-cloak @click="window.scrollTo({top:0,behavior:'smooth'})"
+            class="bg-white border border-red-200 text-red-500 p-3 rounded-xl shadow-lg hover:bg-red-50 transition"
+            title="Kembali ke atas">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+            </svg>
+        </button>
         @if (Auth::user()->role == 'admin')
-            <a href="{{ route('dashboard') }}" class="flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            <a href="{{ route('dashboard') }}"
+                class="bg-red-500 p-3 rounded-xl text-white shadow-lg hover:bg-red-600 transition flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
-                Kembali
+                <span class="hidden sm:inline">Kembali</span>
             </a>
         @elseif (Auth::user()->role == 'wakil')
             <form action="{{ route('logout') }}" method="POST">
                 @csrf
                 <button type="submit"
-                    class="flex items-center space-x-2 text-white md:px-4 rounded-lg transition duration-200">
-                    <!-- Ikon untuk mobile -->
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 md:h-4 md:w-4" fill="none"
-                        viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    class="bg-red-500 p-3 rounded-xl text-white shadow-lg hover:bg-red-600 transition flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                     </svg>
-                    <!-- Teks untuk desktop -->
-                    <span class="hidden md:inline">Logout</span>
+                    <span class="hidden sm:inline">Logout</span>
                 </button>
             </form>
         @endif
@@ -392,6 +600,57 @@
                 shareUrl: '',
                 shareTitle: '',
                 copied: false,
+                showQuestionModal: false,
+                filterSticky: false,
+                filterExpanded: false,
+                filterBarHeight: 0,
+                showScrollTop: false,
+                editQuestions: @json($questions).map(q => ({
+                    question_key: q.question_key,
+                    question_label: q.question_label,
+                    placeholder: q.placeholder || '',
+                    is_required: q.is_required
+                })),
+
+                addQuestion() {
+                    this.editQuestions.push({
+                        question_key: 'custom_' + Date.now(),
+                        question_label: 'Pertanyaan Baru',
+                        placeholder: '',
+                        is_required: true
+                    });
+                },
+
+                removeQuestion(index) {
+                    if (this.editQuestions.length > 1) {
+                        this.editQuestions.splice(index, 1);
+                    }
+                },
+
+                resetQuestions() {
+                    if (confirm('Reset semua pertanyaan ke default?')) {
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = '{{ route('form_questions.reset', 'keluh_kesah') }}';
+                        const csrf = document.createElement('input');
+                        csrf.type = 'hidden'; csrf.name = '_token'; csrf.value = '{{ csrf_token() }}';
+                        form.appendChild(csrf);
+                        document.body.appendChild(form);
+                        form.submit();
+                    }
+                },
+
+                getAnswer(msg, key) {
+                    const builtInKeys = ['keluh_kesah', 'phone_number'];
+                    if (builtInKeys.includes(key)) {
+                        return msg[key] || '';
+                    }
+                    if (msg.custom_answers) {
+                        const answers = typeof msg.custom_answers === 'string' ? JSON.parse(msg.custom_answers) : msg.custom_answers;
+                        return answers[key] || '';
+                    }
+                    return '';
+                },
 
                 highlightText(text, query) {
                     if (!query || !text) return text;
@@ -466,14 +725,12 @@
                     this.showModal = true;
 
                     try {
-                        // Cek apakah data sudah ada di local messages
                         const existingMessage = this.messages.find(msg => msg.id === messageId);
 
                         if (existingMessage) {
                             this.currentMessage = existingMessage;
                             this.detailLoading = false;
                         } else {
-                            // Fetch detail dari API jika tidak ada di local
                             const response = await fetch(`/aspiration-keluh-kesah/${messageId}`);
                             if (!response.ok) {
                                 throw new Error('Gagal mengambil data');
@@ -502,15 +759,7 @@
                 },
 
                 getTopicIcon(topic) {
-                    const icons = {
-                        'akademik': '📚',
-                        'fasilitas': '🏗️',
-                        'non-akademik': '🎯',
-                        'lingkungan': '🌿',
-                        'pelayanan': '🤝',
-                        'lainnya': '📌',
-                    };
-                    return icons[topic] || '📌';
+                    return '';
                 },
 
                 formatDate(dateString) {
@@ -596,16 +845,44 @@
 
                 init() {
                     this.fetchMessages(true);
-                    this.setupScroll();
+                    this.$nextTick(() => {
+                        const filterBar = this.$refs.filterBar;
+                        const filterBarMobile = this.$refs.filterBarMobile;
+                        if (filterBar) {
+                            this.filterBarHeight = filterBar.offsetHeight;
+                        } else if (filterBarMobile) {
+                            this.filterBarHeight = filterBarMobile.offsetHeight;
+                        }
+                    });
+                },
+
+                onWindowScroll() {
+                    const scrollY = window.scrollY;
+                    this.showScrollTop = scrollY > 400;
+                    const threshold = 100;
+                    if (scrollY > threshold && !this.filterSticky) {
+                        const filterBar = this.$refs.filterBar;
+                        const filterBarMobile = this.$refs.filterBarMobile;
+                        if (filterBar) {
+                            this.filterBarHeight = filterBar.offsetHeight;
+                        } else if (filterBarMobile) {
+                            this.filterBarHeight = filterBarMobile.offsetHeight;
+                        }
+                        this.filterSticky = true;
+                        this.filterExpanded = false;
+                    } else if (scrollY <= threshold && this.filterSticky) {
+                        this.filterSticky = false;
+                        this.filterExpanded = false;
+                    }
+                    if (!this.loading && !this.loadingMore && this.currentPage < this.lastPage) {
+                        if (scrollY + window.innerHeight >= document.documentElement.scrollHeight - 200) {
+                            this.loadMore();
+                        }
+                    }
                 },
 
                 setupScroll() {
-                    window.addEventListener('scroll', () => {
-                        if (this.loading || this.loadingMore || this.currentPage >= this.lastPage) return;
-                        if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 200) {
-                            this.loadMore();
-                        }
-                    });
+                    // handled via @scroll.window in template
                 }
             }
         }

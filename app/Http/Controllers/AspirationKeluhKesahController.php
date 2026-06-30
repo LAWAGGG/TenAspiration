@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AspirationKeluhKesah;
+use App\Models\FormQuestion;
 use App\Notifications\KeluhKesahNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Notification;
@@ -14,7 +15,9 @@ class AspirationKeluhKesahController extends Controller
      */
     public function index()
     {
-        return view('aspiration_keluh_kesah.index');
+        $questions = FormQuestion::getForForm('keluh_kesah');
+        $defaultQuestions = FormQuestion::getDefaults()['keluh_kesah'];
+        return view('aspiration_keluh_kesah.index', compact('questions', 'defaultQuestions'));
     }
 
     public function fetchPaginated(Request $request)
@@ -25,7 +28,8 @@ class AspirationKeluhKesahController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('keluh_kesah', 'like', "%{$search}%")
-                  ->orWhere('phone_number', 'like', "%{$search}%");
+                  ->orWhere('phone_number', 'like', "%{$search}%")
+                  ->orWhere('custom_answers', 'like', "%{$search}%");
             });
         }
         if ($request->filled('dateFrom')) {
@@ -43,7 +47,8 @@ class AspirationKeluhKesahController extends Controller
 
     public function aspirationForm()
     {
-        return view('aspiration_forms.keluh-kesah-form');
+        $questions = FormQuestion::getForForm('keluh_kesah');
+        return view('aspiration_forms.keluh-kesah-form', compact('questions'));
     }
 
     /**
@@ -51,10 +56,26 @@ class AspirationKeluhKesahController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            "keluh_kesah" => "required|string",
-            "phone_number" => "required|digits_between:8,12"
-        ]);
+        $questions = FormQuestion::getForForm('keluh_kesah');
+
+        $rules = [];
+        foreach ($questions as $q) {
+            $key = $q['question_key'];
+            if ($q['is_required']) {
+                $rules[$key] = 'required|string';
+            } else {
+                $rules[$key] = 'nullable|string';
+            }
+        }
+
+        $request->validate($rules);
+
+        // Phone number specific validation for built-in field
+        if ($request->has('phone_number') && $request->input('phone_number')) {
+            $request->validate(['phone_number' => 'digits_between:8,15']);
+        }
+
+        $extracted = FormQuestion::extractAnswers('keluh_kesah', $request->all());
 
         $badWords = [
             "anjing",
@@ -96,16 +117,18 @@ class AspirationKeluhKesahController extends Controller
             "bacot"
         ];
 
-        foreach ($badWords as $word) {
-            if (stripos($request->keluh_kesah, $word) !== false) {
-                return back()->withErrors(['message' => "Pesan mengandung kata {$word}! tolong diubah"])->withInput();
+        foreach ($extracted['regular'] as $key => $value) {
+            foreach ($badWords as $word) {
+                if (stripos($value, $word) !== false) {
+                    return back()->withErrors(['message' => "Pesan mengandung kata {$word}! tolong diubah"])->withInput();
+                }
             }
         }
 
-        AspirationKeluhKesah::create([
-            "keluh_kesah" => $request->keluh_kesah,
-            "phone_number" => $request->phone_number,
-        ]);
+        $data = $extracted['regular'];
+        $data['custom_answers'] = !empty($extracted['custom']) ? $extracted['custom'] : null;
+
+        AspirationKeluhKesah::create($data);
 
         $receivers = [
             'yunitakamali72@gmail.com',
@@ -115,12 +138,12 @@ class AspirationKeluhKesahController extends Controller
             'sayutiazwarmi67@gmail.com'
         ];
 
+        $keluhKesah = $data['keluh_kesah'] ?? '';
+        $phoneNumber = $data['phone_number'] ?? '';
+
         foreach ($receivers as $to) {
             Notification::route('mail', $to)->notify(
-                new KeluhKesahNotification(
-                    $request->keluh_kesah,
-                    $request->phone_number
-                )
+                new KeluhKesahNotification($keluhKesah, $phoneNumber)
             );
         }
 

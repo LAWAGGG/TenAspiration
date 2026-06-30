@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kirim Aspirasi</title>
     @vite('resources/css/app.css')
-    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <style>
         [x-cloak] {
             display: none !important;
@@ -33,7 +32,6 @@
             }
         }
 
-        /* Custom Select Styles */
         .custom-select {
             position: relative;
             width: 100%;
@@ -59,13 +57,9 @@
             border-color: #9ca3af;
         }
 
-        .select-trigger:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 2px #bfdbfe;
-        }
-
+        .select-trigger:focus,
         .select-trigger.open {
+            outline: none;
             border-color: #3b82f6;
             box-shadow: 0 0 0 2px #bfdbfe;
         }
@@ -117,7 +111,6 @@
             font-weight: 500;
         }
 
-        /* Untuk mobile optimization */
         @media (max-width: 768px) {
             .select-trigger {
                 padding: 16px;
@@ -131,13 +124,11 @@
             }
         }
 
-        /* Textarea styling improvement */
         .custom-textarea {
             min-height: 80px;
             resize: vertical;
         }
 
-        /* Button improvements */
         .btn-primary {
             background: linear-gradient(135deg, #3b82f6, #2563eb);
             transition: all 0.3s ease;
@@ -164,28 +155,18 @@
 
 <body class="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 p-4">
 
+    {{-- Kirim data PHP ke JS lewat tag <script> biasa, BUKAN inline x-data --}}
+    <script>
+        window.__ASPIRATION_DATA__ = {
+            events: @json($events->map(fn($e) => ['id' => (string) $e->id, 'name' => $e->name])->values()),
+            eventQuestions: @json($eventQuestions),
+            hasSuccess: {{ session('success') ? 'true' : 'false' }},
+            oldEventId: '{{ old('event_id') }}',
+        };
+    </script>
+
     <div class="card border bg-white shadow-2xl rounded-3xl p-6 sm:p-8 w-full max-w-md border-blue-500 relative overflow-hidden"
-        x-data="{
-            hint: false,
-            successModal: @if (session('success')) true @else false @endif,
-            isLoading: false,
-            selectOpen: false,
-            selectedEventId: '',
-            selectedEventName: '-- Pilih Event --',
-            events: [
-                @if ($events->count() > 0) @foreach ($events as $event)
-            {
-                id: '{{ $event->id }}',
-                name: '{{ $event->name }}'
-            },
-            @endforeach @endif
-            ]
-        }" x-init="@if (session('success')) setTimeout(() => { successModal = true }, 100); @endif
-        @if (old('event_id')) const event = events.find(e => e.id == '{{ old('event_id') }}');
-                if (event) {
-                    selectedEventId = event.id;
-                    selectedEventName = event.name;
-                } @endif" @click.outside="selectOpen = false">
+        x-data="aspirationForm" @click.outside="selectOpen = false">
 
         <div class="absolute -top-20 -right-20 w-40 h-40 rounded-full bg-blue-100 opacity-30"></div>
         <div class="absolute -bottom-16 -left-16 w-32 h-32 rounded-full bg-blue-100 opacity-30"></div>
@@ -203,7 +184,6 @@
                 sedang diselenggarakan.
             </p>
 
-            <!-- Error -->
             @if ($errors->any())
                 <div class="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-sm">
                     <ul class="list-disc list-inside space-y-1">
@@ -214,14 +194,13 @@
                 </div>
             @endif
 
-            <!-- Form aspirasi -->
             <form action="{{ route('aspiration_events.store') }}" method="POST" class="space-y-4"
                 x-on:submit="isLoading = true">
                 @csrf
 
-                <!-- Hidden input untuk event_id -->
-                <input type="hidden" name="event_id" x-model="selectedEventId" required>
+                <input type="hidden" name="event_id" x-model="selectedEventId">
 
+                <!-- Pilih Event -->
                 <div>
                     <label class="text-sm font-medium text-gray-700 mb-2 flex items-center">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-blue-500" fill="none"
@@ -232,10 +211,9 @@
                         Event
                     </label>
 
-                    <!-- Custom Select -->
                     <div class="custom-select">
                         <button type="button" @click="if(events.length > 0) selectOpen = !selectOpen"
-                            :class="selectOpen ? 'select-trigger open' : 'select-trigger'" class="select-trigger"
+                            :class="selectOpen ? 'select-trigger open' : 'select-trigger'"
                             :disabled="events.length === 0">
                             <template x-if="events.length === 0">
                                 <span class="text-gray-400">Tidak ada event yang tersedia</span>
@@ -254,77 +232,47 @@
                         <div x-show="selectOpen && events.length > 0" x-cloak class="select-dropdown">
                             <template x-for="event in events" :key="event.id">
                                 <div @click="selectedEventId = event.id; selectedEventName = event.name; selectOpen = false;"
-                                    :class="selectedEventId === event.id ? 'select-option selected' : 'select-option'"
-                                    class="select-option">
+                                    :class="selectedEventId === event.id ? 'select-option selected' : 'select-option'">
                                     <span x-text="event.name"></span>
                                 </div>
                             </template>
                         </div>
                     </div>
                 </div>
-
-                <!-- kesan dan pesan -->
-                <div>
-                    <label class="text-sm font-medium text-gray-700 mb-2 flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-blue-500" fill="none"
-                            viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                        </svg>
-                        Kesan Pesan
-                    </label>
-                    <textarea name="kesan_pesan" rows="4" placeholder="Berikan kesan dan pesan setelah dilaksanakannya event ini"
-                        class="custom-textarea w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300 transition"
-                        required>{{ old('kesan_pesan') }}</textarea>
+                <div x-show="!selectedEventId"
+                    class="text-center py-8 px-4 border-2 border-dashed border-blue-200 rounded-xl bg-blue-50">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-blue-300 mb-3" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                            d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                    </svg>
+                    <p class="text-blue-400 font-medium text-sm">Pilih event terlebih dahulu</p>
+                    <p class="text-blue-300 text-xs mt-1">Pertanyaan akan muncul setelah kamu memilih event</p>
                 </div>
 
-                <!-- kritik saran masukan -->
-                <div>
-                    <label class="text-sm font-medium text-gray-700 mb-2 flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-blue-500" fill="none"
-                            viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                        </svg>
-                        Berikan Kritik, Saran, & Masukan
-                    </label>
-                    <textarea name="message" rows="4" placeholder="Berikan Kritik, Saran, Dan Masukan dalam event ini"
-                        class="custom-textarea w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300 transition"
-                        required>{{ old('message') }}</textarea>
+                <!-- Pertanyaan Dinamis -->
+                <template x-for="(q, index) in currentQuestions" :key="q.question_key">
+                    <div>
+                        <label class="text-sm font-medium text-gray-700 mb-2 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-blue-500" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                            </svg>
+                            <span x-text="q.question_label"></span>
+                            <span x-show="!q.is_required" class="text-gray-400 text-xs ml-1">(opsional)</span>
+                        </label>
+                        <textarea :name="q.question_key" :placeholder="q.placeholder" rows="4" :required="q.is_required"
+                            class="custom-textarea w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300 transition"></textarea>
+                    </div>
+                </template>
+
+                <div x-show="selectedEventId && currentQuestions.length === 0"
+                    class="text-center py-4 text-gray-500 text-sm">
+                    Tidak ada pertanyaan untuk event ini.
                 </div>
 
-                <!-- Kejadian buruk -->
-                <div>
-                    <label class="text-sm font-medium text-gray-700 mb-2 flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-blue-500" fill="none"
-                            viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                        </svg>
-                        Kejadian buruk yang dialami selama event
-                    </label>
-                    <textarea name="bad_moment" rows="4" placeholder="jika tidak ada, berikan (-)"
-                        class="custom-textarea w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300 transition"
-                        required>{{ old('bad_moment') }}</textarea>
-                </div>
-
-                <!-- Perubahan dari event sebelumnya -->
-                <div>
-                    <label class="text-sm font-medium text-gray-700 mb-2 flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-blue-500" fill="none"
-                            viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                        </svg>
-                        Perubahan dari event sebelumnya
-                    </label>
-                    <textarea name="perubahan_dari_event" rows="4"
-                        placeholder="Apa yang paling kalian rasakan perubahan dari event sebelumnya?"
-                        class="custom-textarea w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300 transition"
-                        required>{{ old('perubahan_dari_event') }}</textarea>
-                </div>
-
-                <!-- Tombol kirim -->
+                <!-- Tombol Kirim -->
                 <button type="submit"
                     class="w-full py-3 rounded-lg font-semibold shadow-md transition-all duration-200 btn-primary text-white flex items-center justify-center"
                     :disabled="isLoading">
@@ -332,8 +280,8 @@
                         <div class="loading-spinner"></div>
                     </template>
                     <template x-if="!isLoading">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none"
-                            viewBox="0 0 24 24" stroke="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                         </svg>
@@ -354,13 +302,13 @@
                 <div class="bg-white rounded-xl p-6 shadow-2xl text-center max-w-sm w-full border-t-4 border-blue-500">
                     <h2 class="text-xl font-bold text-gray-800 mb-2">Panduan</h2>
                     <p class="text-gray-600 mb-4 text-sm">
-                        1. Memilih event yang sedang diselenggarakan. <br>
+                        1. Memilih event yang sedang diselenggarakan.<br>
                         2. Mengisi dari setiap kolom pertanyaan yang sudah diberikan.<br>
                         3. Gunakan bahasa yang baik dan sopan.<br>
-                        4. Klik tombol "Kirim Aspirasi". <br>
+                        4. Klik tombol "Kirim Aspirasi".
                     </p>
                     <button @click="hint = false"
-                        class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-offset-2">
+                        class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">
                         Mengerti
                     </button>
                 </div>
@@ -380,16 +328,57 @@
                     </div>
                     <h2 class="text-xl font-bold text-gray-800 mb-2">Aspirasi Terkirim!</h2>
                     <p class="text-gray-600 mb-4 text-sm">
-                        {{'Terima kasih telah menyampaikan aspirasi!, suara Anda sangat berarti bagi kami.' }}
+                        Terima kasih telah menyampaikan aspirasi!, suara Anda sangat berarti bagi kami.
                     </p>
                     <button @click="successModal = false"
-                        class="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition focus:outline-none focus:ring-2 focus:ring-green-300 focus:ring-offset-2">
+                        class="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition">
                         Tutup
                     </button>
                 </div>
             </div>
         </div>
     </div>
+
+    {{-- Alpine.js dimuat SETELAH komponen didefinisikan --}}
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+    <script>
+        // Definisikan Alpine component SEBELUM Alpine init
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('aspirationForm', () => {
+                const d = window.__ASPIRATION_DATA__;
+
+                return {
+                    hint: false,
+                    successModal: false,
+                    isLoading: false,
+                    selectOpen: false,
+                    selectedEventId: '',
+                    selectedEventName: '-- Pilih Event --',
+                    events: d.events,
+                    eventQuestions: d.eventQuestions,
+
+                    init() {
+                        if (d.hasSuccess) {
+                            this.successModal = true;
+                        }
+                        if (d.oldEventId) {
+                            const evt = this.events.find(e => e.id === d.oldEventId);
+                            if (evt) {
+                                this.selectedEventId = evt.id;
+                                this.selectedEventName = evt.name;
+                            }
+                        }
+                    },
+
+                    get currentQuestions() {
+                        if (!this.selectedEventId) return [];
+                        return this.eventQuestions[this.selectedEventId] || [];
+                    }
+                };
+            });
+        });
+    </script>
 
 </body>
 

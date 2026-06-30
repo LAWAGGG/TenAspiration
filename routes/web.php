@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\FormQuestionController;
 use App\Http\Controllers\AspirationController;
 use App\Http\Controllers\AspirationEventController;
 use App\Http\Controllers\AspirationKeluhKesahController;
@@ -99,5 +100,12 @@ Route::middleware('auth')->group(function () {
 
 Route::get('/share/{token}', [ShareController::class, 'show'])->name('share.show');
 Route::get('/api/share/{token}/data', [ShareController::class, 'fetchShared'])->name('api.share.data');
+
+Route::middleware('auth')->group(function () {
+    Route::put('/form-questions/{formType}', [FormQuestionController::class, 'update'])->name('form_questions.update');
+    Route::put('/form-questions/{formType}/{entityId}', [FormQuestionController::class, 'update'])->name('form_questions.update_entity');
+    Route::post('/form-questions/{formType}/reset', [FormQuestionController::class, 'reset'])->name('form_questions.reset');
+    Route::post('/form-questions/{formType}/{entityId}/reset', [FormQuestionController::class, 'reset'])->name('form_questions.reset_entity');
+});
 
 require __DIR__ . '/auth.php';

@@ -8,6 +8,10 @@ class AspirationEvent extends Model
 {
     protected $guarded = [];
 
+    protected $casts = [
+        'custom_answers' => 'array',
+    ];
+
     public function event(){
         return $this->belongsTo(Event::class);
     }

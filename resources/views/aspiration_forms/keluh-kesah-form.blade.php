@@ -64,19 +64,24 @@
                 x-on:submit="isLoading = true">
                 @csrf
 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Keluh / Kesah</label>
-                    <textarea name="keluh_kesah" rows="5" required
-                        class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-300 focus:border-red-300 transition"
-                        placeholder="Ceritakan keluh kesahmu di sini...">{{ old('keluh_kesah') }}</textarea>
-                </div>
+                @php
+                    $keluhKesahQuestions = $questions ?? FormQuestion::getForForm('keluh_kesah');
+                @endphp
 
+                @foreach ($keluhKesahQuestions as $question)
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Nomor Telepon</label>
-                    <input type="text" name="phone_number" value="{{ old('phone_number') }}"
+                    <label class="block text-sm font-medium text-gray-700 mb-2">{{ $question['question_label'] }}</label>
+                    @if ($question['question_key'] === 'keluh_kesah')
+                    <textarea name="{{ $question['question_key'] }}" rows="5" {{ $question['is_required'] ? 'required' : '' }}
                         class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-300 focus:border-red-300 transition"
-                        placeholder="08xxxxxxxxxx" />
+                        placeholder="{{ $question['placeholder'] ?? '' }}">{{ old($question['question_key']) }}</textarea>
+                    @else
+                    <input type="text" name="{{ $question['question_key'] }}" value="{{ old($question['question_key']) }}" {{ $question['is_required'] ? 'required' : '' }}
+                        class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-300 focus:border-red-300 transition"
+                        placeholder="{{ $question['placeholder'] ?? '' }}" />
+                    @endif
                 </div>
+                @endforeach
 
                 <!-- Tombol dengan gradien merah -->
                 <button type="submit"
