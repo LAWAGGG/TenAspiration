@@ -8,6 +8,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ShareController;
+use App\Http\Controllers\TargetEmailController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/detail', function () {
@@ -20,7 +21,7 @@ Route::get('/', [AspirationController::class, "aspirationForm"])->name('aspirati
 Route::post('/aspirations', [AspirationController::class, 'store'])->name('aspirations.store');
 
 //event form
-Route::get('/event', [AspirationEventController::class, "aspirationForm"]);
+Route::get('/event', [EventController::class, 'getEvent'])->name('event');
 //event store logic
 Route::post('/aspiration-events', [AspirationEventController::class, 'store'])->name('aspiration_events.store');
 
@@ -28,9 +29,6 @@ Route::post('/aspiration-events', [AspirationEventController::class, 'store'])->
 Route::get('/keluh-kesah', [AspirationKeluhKesahController::class, "aspirationForm"]);
 //keluh kesah store logic
 Route::post('/aspiration-keluhkesah', [AspirationKeluhKesahController::class, 'store'])->name('aspiration_keluhkesah.store');
-
-//get all event
-Route::get('/event', [EventController::class, 'getEvent'])->name('event');
 
 //authentication
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
@@ -80,7 +78,7 @@ Route::middleware('auth')->group(function () {
 //page aspirasi tiap event
 Route::middleware('auth')->group(function () {
     Route::get('/aspiration-events', [AspirationEventController::class, 'index'])->name('aspiration_events.index');
-    Route::get('/aspiration-events/create', [AspirationEventController::class, 'create'])->name('aspiration_events.create');
+
     Route::get('/aspiration-events/{id}', [AspirationEventController::class, 'show'])->name('aspiration_events.show');
     Route::get('/aspiration-events/{id}/edit', [AspirationEventController::class, 'edit'])->name('aspiration_events.edit');
     Route::put('/aspiration-events/{id}', [AspirationEventController::class, 'update'])->name('aspiration_events.update');
@@ -109,6 +107,14 @@ Route::middleware('auth')->group(function () {
     Route::put('/form-questions/{formType}/{entityId}', [FormQuestionController::class, 'update'])->name('form_questions.update_entity');
     Route::post('/form-questions/{formType}/reset', [FormQuestionController::class, 'reset'])->name('form_questions.reset');
     Route::post('/form-questions/{formType}/{entityId}/reset', [FormQuestionController::class, 'reset'])->name('form_questions.reset_entity');
+});
+
+// Target email routes
+Route::middleware('auth')->group(function () {
+    Route::get('/api/target-emails', [TargetEmailController::class, 'index'])->name('target_emails.index');
+    Route::post('/api/target-emails', [TargetEmailController::class, 'store'])->name('target_emails.store');
+    Route::delete('/api/target-emails/{id}', [TargetEmailController::class, 'destroy'])->name('target_emails.destroy');
+    Route::post('/api/target-emails/{id}/toggle', [TargetEmailController::class, 'toggle'])->name('target_emails.toggle');
 });
 
 require __DIR__ . '/auth.php';

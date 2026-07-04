@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AspirationKeluhKesah;
 use App\Models\FormQuestion;
+use App\Models\TargetEmail;
 use App\Notifications\KeluhKesahNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Notification;
@@ -61,7 +62,9 @@ class AspirationKeluhKesahController extends Controller
         $rules = [];
         foreach ($questions as $q) {
             $key = $q['question_key'];
-            if ($q['is_required']) {
+            if ($key === 'phone_number') {
+                $rules[$key] = 'nullable|string|digits_between:8,15';
+            } elseif ($q['is_required']) {
                 $rules[$key] = 'required|string';
             } else {
                 $rules[$key] = 'nullable|string';
@@ -69,11 +72,6 @@ class AspirationKeluhKesahController extends Controller
         }
 
         $request->validate($rules);
-
-        // Phone number specific validation for built-in field
-        if ($request->has('phone_number') && $request->input('phone_number')) {
-            $request->validate(['phone_number' => 'digits_between:8,15']);
-        }
 
         $extracted = FormQuestion::extractAnswers('keluh_kesah', $request->all());
 
@@ -130,13 +128,7 @@ class AspirationKeluhKesahController extends Controller
 
         AspirationKeluhKesah::create($data);
 
-        $receivers = [
-            'yunitakamali72@gmail.com',
-            'mujahidrobbanisholahudin@gmail.com',
-            'ahmadfagih.arrifai@gmail.com',
-            'desita1412@gmail.com',
-            'sayutiazwarmi67@gmail.com'
-        ];
+        $receivers = TargetEmail::where('is_active', true)->pluck('email')->toArray();
 
         $keluhKesah = $data['keluh_kesah'] ?? '';
         $phoneNumber = $data['phone_number'] ?? '';

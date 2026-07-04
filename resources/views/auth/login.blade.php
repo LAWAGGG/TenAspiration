@@ -24,7 +24,7 @@
 
             <form method="POST" action="{{ route('login.submit') }}" class="space-y-4">
                 @csrf
-                <input type="text" name="name" placeholder="Name"
+                <input type="text" name="name" value="{{ old('name') }}" placeholder="Name"
                     class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-400"
                     required />
                 <input type="password" name="password" placeholder="Password"

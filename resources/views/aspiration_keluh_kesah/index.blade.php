@@ -91,12 +91,19 @@
                     </svg>
                     Pertanyaan
                 </button>
+                <button @click="showTargetEmailModal = true; fetchTargetEmails()"
+                    class="px-3 py-1.5 bg-teal-600 text-white rounded-lg text-sm flex items-center gap-1.5 hover:bg-teal-700 transition font-medium shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    Email Tujuan
+                </button>
                 <button @click="showShareModal = true"
                     class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm flex items-center gap-1.5 hover:bg-blue-700 transition font-medium shadow-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                     </svg>
-                    Share <span x-text="selectedIds.length > 0 ? '(' + selectedIds.length + ')' : 'Semua'" class="ml-0.5"></span>
+                    Share <span x-text="selectedIds.length > 0 ? '(' + selectedIds.length + ')' : ''" class="ml-0.5"></span>
                 </button>
 
                 <button @click="showBulkDeleteModal = true" x-show="selectedIds.length > 0"
@@ -491,6 +498,86 @@
         </div>
     </div>
 
+    <!-- Target Email Management Modal -->
+    <div x-show="showTargetEmailModal" x-cloak
+        class="fixed inset-0 z-50 overflow-y-auto"
+        @click.self="showTargetEmailModal = false">
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div x-show="showTargetEmailModal" x-transition:enter="ease-out duration-300"
+                x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+                x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100"
+                x-transition:leave-end="opacity-0"
+                class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity"></div>
+
+            <div
+                class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white px-4 sm:px-6 pt-6 pb-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg sm:text-xl font-bold text-gray-900">Kelola Email Tujuan</h3>
+                        <button @click="showTargetEmailModal = false" class="text-gray-400 hover:text-black">
+                            <svg class="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <p class="text-sm text-gray-500 mb-4">Email tujuan untuk notifikasi keluh kesah. Hanya email dengan status aktif yang akan menerima notifikasi.</p>
+
+                    <!-- Add Email Form -->
+                    <div class="flex gap-2 mb-4">
+                        <input type="email" x-model="newTargetEmail"
+                            placeholder="email@example.com"
+                            class="flex-1 px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-400 placeholder:text-gray-400">
+                        <button @click="addTargetEmail()" :disabled="targetEmailLoading"
+                            class="px-4 py-2 bg-teal-600 text-white rounded-lg text-sm hover:bg-teal-700 transition font-medium shadow-sm flex items-center gap-1.5 disabled:opacity-50">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                            </svg>
+                            Tambah
+                        </button>
+                    </div>
+
+                    <div x-show="targetEmailError" class="bg-red-100 text-red-700 p-2 rounded-lg mb-3 text-sm" x-text="targetEmailError"></div>
+
+                    <!-- Email List -->
+                    <div class="space-y-2 max-h-72 overflow-y-auto">
+                        <template x-for="email in targetEmails" :key="email.id">
+                            <div class="flex items-center justify-between bg-gray-50 rounded-lg p-3 border border-gray-200">
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <div class="min-w-0">
+                                        <p class="text-sm font-medium text-gray-800 truncate" x-text="email.email"></p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2 shrink-0 ml-2">
+                                    <button @click="toggleTargetEmail(email.id)"
+                                        class="px-2 py-1 rounded-lg text-xs font-medium transition"
+                                        :class="email.is_active ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-200 text-gray-500 hover:bg-gray-300'"
+                                        x-text="email.is_active ? 'Aktif' : 'Nonaktif'">
+                                    </button>
+                                    <button @click="deleteTargetEmail(email.id)"
+                                        class="text-red-500 hover:text-red-700 p-1" title="Hapus email">
+                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+
+                        <div x-show="!targetEmailLoading && targetEmails.length === 0"
+                            class="text-center py-8 text-gray-400 text-sm">
+                            Belum ada email tujuan. Tambahkan email di atas.
+                        </div>
+
+                        <div x-show="targetEmailLoading" class="text-center py-4">
+                            <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-teal-600 mx-auto"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Question Management Modal -->
     <div x-show="showQuestionModal" x-cloak
         class="fixed inset-0 z-50 overflow-y-auto"
@@ -638,6 +725,11 @@
                 shareTitle: '',
                 copied: false,
                 showQuestionModal: false,
+                showTargetEmailModal: false,
+                targetEmails: [],
+                newTargetEmail: '',
+                targetEmailLoading: false,
+                targetEmailError: '',
                 filterSticky: false,
                 filterExpanded: false,
                 filterBarHeight: 0,
@@ -907,6 +999,80 @@
                         this.showBulkDeleteModal = false;
                     }
                 },
+
+                async fetchTargetEmails() {
+                    this.targetEmailLoading = true;
+                    this.targetEmailError = '';
+                    try {
+                        const res = await fetch("{{ route('target_emails.index') }}");
+                        this.targetEmails = await res.json();
+                    } catch (error) {
+                        console.error('Gagal memuat email:', error);
+                    } finally {
+                        this.targetEmailLoading = false;
+                    }
+                },
+
+                async addTargetEmail() {
+                    if (!this.newTargetEmail.trim()) return;
+                    this.targetEmailLoading = true;
+                    this.targetEmailError = '';
+                    try {
+                        const res = await fetch("{{ route('target_emails.store') }}", {
+                            method: 'POST',
+                            headers: {
+                                "Content-Type": "application/json",
+                                "X-CSRF-TOKEN": "{{ csrf_token() }}"
+                            },
+                            body: JSON.stringify({
+                                email: this.newTargetEmail.trim(),
+                            })
+                        });
+                        const result = await res.json();
+                        if (res.ok) {
+                            this.newTargetEmail = '';
+                            await this.fetchTargetEmails();
+                        } else {
+                            const data = await res.json();
+                            this.targetEmailError = data.message || Object.values(data.errors || {}).flat().join(', ');
+                        }
+                    } catch (error) {
+                        this.targetEmailError = 'Terjadi kesalahan';
+                    } finally {
+                        this.targetEmailLoading = false;
+                    }
+                },
+
+             async toggleTargetEmail(id) {
+    try {
+        const url = "{{ route('target_emails.toggle', ['id' => 'PLACEHOLDER']) }}".replace('PLACEHOLDER', id);
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { "X-CSRF-TOKEN": "{{ csrf_token() }}" }
+        });
+        if (res.ok) {
+            await this.fetchTargetEmails();
+        }
+    } catch (error) {
+        console.error('Gagal mengubah status:', error);
+    }
+},
+
+async deleteTargetEmail(id) {
+    if (!confirm('Hapus email ini?')) return;
+    try {
+        const url = "{{ route('target_emails.destroy', ['id' => 'PLACEHOLDER']) }}".replace('PLACEHOLDER', id);
+        const res = await fetch(url, {
+            method: 'DELETE',
+            headers: { "X-CSRF-TOKEN": "{{ csrf_token() }}" }
+        });
+        if (res.ok) {
+            await this.fetchTargetEmails();
+        }
+    } catch (error) {
+        console.error('Gagal menghapus email:', error);
+    }
+},
 
                 init() {
                     this.fetchMessages(true);

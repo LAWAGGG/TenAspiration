@@ -163,6 +163,7 @@
             eventQuestions: @json($eventQuestions),
             hasSuccess: {{ session('success') ? 'true' : 'false' }},
             oldEventId: '{{ old('event_id') }}',
+            oldInput: @json(!session('success') ? old() : (object)[]),
         };
     </script>
 
@@ -264,6 +265,7 @@
                             <span x-show="!q.is_required" class="text-gray-400 text-xs ml-1">(opsional)</span>
                         </label>
                         <textarea :name="q.question_key" :placeholder="q.placeholder" rows="4" :required="q.is_required"
+                            x-init="$el.value = oldInput[q.question_key] ?? ''"
                             class="custom-textarea w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300 transition"></textarea>
                     </div>
                 </template>
@@ -370,6 +372,10 @@
                                 this.selectedEventName = evt.name;
                             }
                         }
+                    },
+
+                    get oldInput() {
+                        return d.oldInput || {};
                     },
 
                     get currentQuestions() {

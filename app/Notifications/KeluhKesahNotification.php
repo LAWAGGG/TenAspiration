@@ -29,11 +29,9 @@ class KeluhKesahNotification extends Notification
     {
         return (new MailMessage)
             ->subject('Keluh Kesah Baru Masuk! #' . uniqid())
-            ->line('Ada keluhan baru yang dikirim!')
-              ->view('emails.keluhan', [
-            'keluh' => $this->keluh,
-            'phone' => $this->phone,
-            ])
-            ->line('Segera ditindaklanjuti!');
+            ->view('emails.keluhan', [
+                'keluh' => $this->keluh,
+                'phone' => $this->phone,
+            ]);
     }
 }

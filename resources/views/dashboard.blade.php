@@ -307,19 +307,19 @@
                             @csrf
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Nama Event</label>
-                                <input type="text" name="name" placeholder="Masukkan nama event" required
+                                <input type="text" name="name" value="{{ old('name') }}" placeholder="Masukkan nama event" required
                                     class="w-full border border-gray-300 rounded-lg px-3 py-2 sm:px-4 sm:py-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition duration-200 text-sm sm:text-base">
                             </div>
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Deskripsi</label>
                                 <textarea name="description" placeholder="Masukkan deskripsi event (opsional)" rows="3"
-                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 sm:px-4 sm:py-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition duration-200 text-sm sm:text-base"></textarea>
+                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 sm:px-4 sm:py-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition duration-200 text-sm sm:text-base">{{ old('description') }}</textarea>
                             </div>
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Event</label>
-                                <input type="date" name="date" required
+                                <input type="date" name="date" value="{{ old('date') }}" required
                                     class="w-full border border-gray-300 rounded-lg px-3 py-2 sm:px-4 sm:py-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition duration-200 text-sm sm:text-base">
                             </div>
 
