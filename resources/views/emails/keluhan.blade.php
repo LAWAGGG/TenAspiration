@@ -122,33 +122,45 @@
 
         <!-- Content -->
         <div class="content">
-            <!-- Phone Section -->
-            <div class="phone-section">
-                <div class="phone-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                    </svg>
-                </div>
-                <div class="phone-text">
-                    <h3>DARI NOMOR TELEPON</h3>
-                    <p>{{ $phone }}</p>
-                </div>
-            </div>
+            @php
+                $customAnswers = is_array($answers['custom_answers'] ?? null) ? $answers['custom_answers'] : [];
+            @endphp
 
-            <!-- Message Section -->
-            <div class="message-section">
-                <h3>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                    </svg>
-                    ISI KELUH KESAH
-                </h3>
-                <div class="message-content">
-                    {{ $keluh }}
-                </div>
-            </div>
+            @foreach ($questions as $q)
+                @php
+                    $key = $q['question_key'];
+                    $builtInKeys = ['keluh_kesah', 'phone_number'];
+                    $value = in_array($key, $builtInKeys) ? ($answers[$key] ?? '') : ($customAnswers[$key] ?? '');
+                @endphp
+
+                @if (mb_strlen(trim((string) $value)) > 0)
+                    @if ($key === 'phone_number')
+                        <div class="phone-section">
+                            <div class="phone-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                </svg>
+                            </div>
+                            <div class="phone-text">
+                                <h3>{{ $q['question_label'] }}</h3>
+                                <p>{{ $value }}</p>
+                            </div>
+                        </div>
+                    @else
+                        <div class="message-section">
+                            <h3>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                                </svg>
+                                {{ $q['question_label'] }}
+                            </h3>
+                            <div class="message-content">
+                                {{ $value }}
+                            </div>
+                        </div>
+                    @endif
+                @endif
+            @endforeach
 
             <!-- Time -->
             <div class="time">

@@ -126,16 +126,14 @@ class AspirationKeluhKesahController extends Controller
         $data = $extracted['regular'];
         $data['custom_answers'] = !empty($extracted['custom']) ? $extracted['custom'] : null;
 
-        AspirationKeluhKesah::create($data);
+        $record = AspirationKeluhKesah::create($data);
 
         $receivers = TargetEmail::where('is_active', true)->pluck('email')->toArray();
-
-        $keluhKesah = $data['keluh_kesah'] ?? '';
-        $phoneNumber = $data['phone_number'] ?? '';
+        $answers = $record->toArray();
 
         foreach ($receivers as $to) {
             Notification::route('mail', $to)->notify(
-                new KeluhKesahNotification($keluhKesah, $phoneNumber)
+                new KeluhKesahNotification($answers, $questions)
             );
         }
 

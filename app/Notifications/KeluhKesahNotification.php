@@ -3,7 +3,6 @@
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -11,27 +10,27 @@ class KeluhKesahNotification extends Notification
 {
     use Queueable;
 
-    protected $keluh;
-    protected $phone;
+    protected array $answers;
+    protected array $questions;
 
-    public function __construct($keluh, $phone)
+    public function __construct(array $answers, array $questions)
     {
-        $this->keluh = $keluh;
-        $this->phone = $phone;
+        $this->answers = $answers;
+        $this->questions = $questions;
     }
 
-    public function via($notifiable)
+    public function via($notifiable): array
     {
         return ['mail'];
     }
 
-    public function toMail($notifiable)
+    public function toMail($notifiable): MailMessage
     {
         return (new MailMessage)
             ->subject('Keluh Kesah Baru Masuk! #' . uniqid())
             ->view('emails.keluhan', [
-                'keluh' => $this->keluh,
-                'phone' => $this->phone,
+                'answers' => $this->answers,
+                'questions' => $this->questions,
             ]);
     }
 }
