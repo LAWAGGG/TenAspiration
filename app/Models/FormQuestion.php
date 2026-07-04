@@ -8,6 +8,8 @@ class FormQuestion extends Model
 {
     protected $guarded = [];
 
+    protected $casts = ['is_required' => 'boolean'];
+
     protected static function getBuiltInKeys(): array
     {
         return [
@@ -92,6 +94,7 @@ class FormQuestion extends Model
     public static function isBuiltInKey(string $formType, string $key): bool
     {
         $keys = self::getBuiltInKeys()[$formType] ?? [];
+
         return in_array($key, $keys);
     }
 

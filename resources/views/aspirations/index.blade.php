@@ -496,12 +496,12 @@
                                             <input type="text" x-model="q.placeholder" :name="'questions[' + index + '][placeholder]'"
                                                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-purple-400">
                                         </div>
-                                        <div class="flex items-center gap-2">
-                                            <input type="checkbox" x-model="q.is_required" :name="'questions[' + index + '][is_required]'" value="1"
-                                                class="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500">
-                                            <label class="text-xs font-medium text-gray-600">Wajib diisi</label>
-                                            <input type="hidden" :name="'questions[' + index + '][is_required]'" value="0">
-                                        </div>
+<div class="flex items-center gap-2">
+                                             <input type="hidden" :name="'questions[' + index + '][is_required]'" :value="q.is_required ? '1' : '0'">
+                                             <input type="checkbox" x-model="q.is_required"
+                                                 class="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500">
+                                             <label class="text-xs font-medium text-gray-600">Wajib diisi</label>
+                                         </div>
                                     </div>
                                 </div>
                             </template>
@@ -590,7 +590,7 @@
                     question_key: q.question_key,
                     question_label: q.question_label,
                     placeholder: q.placeholder || '',
-                    is_required: q.is_required
+                    is_required: !!q.is_required
                 })),
 
                 addQuestion() {

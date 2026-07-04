@@ -99,6 +99,14 @@
                     Share <span x-text="selectedIds.length > 0 ? '(' + selectedIds.length + ')' : 'Semua'" class="ml-0.5"></span>
                 </button>
 
+                <button @click="showBulkDeleteModal = true" x-show="selectedIds.length > 0"
+                    class="px-3 py-1.5 bg-red-600 text-white rounded-lg text-sm flex items-center gap-1.5 hover:bg-red-700 transition font-medium shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Hapus <span x-text="selectedIds.length"></span>
+                </button>
+
                 <button @click="exportCsv" :disabled="total === 0"
                     :class="total === 0 ? 'bg-gray-300 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600'"
                     class="px-3 py-1.5 text-white rounded-lg text-sm flex items-center gap-1.5 transition font-medium shadow-sm">
@@ -400,6 +408,32 @@
         </div>
     </div>
 
+    <!-- Bulk Delete Modal -->
+    <div x-show="showBulkDeleteModal" x-cloak
+        class="fixed inset-0 p-5 bg-opacity-50 flex justify-center items-center bg-black z-50 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-lg p-6 w-96 text-center">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">Konfirmasi Hapus Massal</h2>
+            <p class="text-gray-600 mb-6">Apakah kamu yakin ingin menghapus <span class="font-bold text-red-600"
+                    x-text="selectedIds.length"></span> keluh kesah?</p>
+            <div class="flex justify-center gap-4">
+                <button @click="showBulkDeleteModal = false"
+                    class="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400"
+                    :disabled="bulkLoading">Batal</button>
+                <button @click="handleBulkDelete()"
+                    class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center justify-center gap-2"
+                    :disabled="bulkLoading">
+                    <template x-if="bulkLoading">
+                        <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                        </svg>
+                    </template>
+                    <span x-text="bulkLoading ? 'Menghapus...' : 'Ya, Hapus Semua'"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Share Modal -->
     <div x-show="showShareModal" x-cloak
         class="fixed inset-0 p-5 bg-opacity-50 flex justify-center items-center bg-black z-50 backdrop-blur-sm"
@@ -511,12 +545,12 @@
                                             <input type="text" x-model="q.placeholder" :name="'questions[' + index + '][placeholder]'"
                                                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-purple-400">
                                         </div>
-                                        <div class="flex items-center gap-2">
-                                            <input type="checkbox" x-model="q.is_required" :name="'questions[' + index + '][is_required]'" value="1"
-                                                class="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500">
-                                            <label class="text-xs font-medium text-gray-600">Wajib diisi</label>
-                                            <input type="hidden" :name="'questions[' + index + '][is_required]'" value="0">
-                                        </div>
+<div class="flex items-center gap-2">
+                                             <input type="hidden" :name="'questions[' + index + '][is_required]'" :value="q.is_required ? '1' : '0'">
+                                             <input type="checkbox" x-model="q.is_required"
+                                                 class="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500">
+                                             <label class="text-xs font-medium text-gray-600">Wajib diisi</label>
+                                         </div>
                                     </div>
                                 </div>
                             </template>
@@ -596,6 +630,8 @@
                 showModal: false,
                 currentMessage: null,
                 selectedIds: [],
+                showBulkDeleteModal: false,
+                bulkLoading: false,
                 showShareModal: false,
                 shareLoading: false,
                 shareUrl: '',
@@ -610,7 +646,7 @@
                     question_key: q.question_key,
                     question_label: q.question_label,
                     placeholder: q.placeholder || '',
-                    is_required: q.is_required
+                    is_required: !!q.is_required
                 })),
 
                 addQuestion() {
@@ -842,6 +878,34 @@
                         this.copied = true;
                         setTimeout(() => { this.copied = false; }, 2000);
                     });
+                },
+
+                async handleBulkDelete() {
+                    if (this.selectedIds.length === 0) return;
+                    this.bulkLoading = true;
+                    try {
+                        const response = await fetch("{{ route('aspiration_keluhkesah.bulk-destroy') }}", {
+                            method: 'POST',
+                            headers: {
+                                "Content-Type": "application/json",
+                                "X-CSRF-TOKEN": "{{ csrf_token() }}"
+                            },
+                            body: JSON.stringify({ ids: this.selectedIds })
+                        });
+                        const result = await response.json();
+                        if (response.ok) {
+                            this.selectedIds = [];
+                            await this.fetchMessages(true);
+                        } else {
+                            alert(result.message || 'Gagal menghapus keluh kesah');
+                        }
+                    } catch (error) {
+                        console.error('Gagal menghapus massal:', error);
+                        alert('Terjadi kesalahan saat menghapus');
+                    } finally {
+                        this.bulkLoading = false;
+                        this.showBulkDeleteModal = false;
+                    }
                 },
 
                 init() {

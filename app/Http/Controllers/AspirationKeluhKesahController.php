@@ -156,6 +156,23 @@ class AspirationKeluhKesahController extends Controller
         return response()->json($aspirationKeluhKesah);
     }
 
+    public function destroy($id)
+    {
+        $item = AspirationKeluhKesah::findOrFail($id);
+        $item->delete();
+        return response()->json(['message' => 'Berhasil dihapus']);
+    }
+
+    public function bulkDestroy(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'integer|exists:aspiration_keluh_kesahs,id',
+        ]);
+        AspirationKeluhKesah::whereIn('id', $request->ids)->delete();
+        return response()->json(['message' => 'Berhasil dihapus']);
+    }
+
     public function exportCsv(Request $request)
     {
         $query = AspirationKeluhKesah::query();

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Aspiration;
+use App\Models\AspirationEvent;
 use App\Models\AspirationKeluhKesah;
 use App\Models\Event;
 use App\Models\FormQuestion;
@@ -15,7 +16,9 @@ class EventController extends Controller
     {
         $events = Event::latest()->get();
         $totalAspirations = Aspiration::count();
-        $todayAspirations = Aspiration::whereDate('created_at', today())->count();
+        $todayAspirations = Aspiration::whereDate('created_at', today())->count()
+            + AspirationEvent::whereDate('created_at', today())->count()
+            + AspirationKeluhKesah::whereDate('created_at', today())->count();
         $totalKeluhKesah = AspirationKeluhKesah::count();
         $totalEvents = Event::count();
 

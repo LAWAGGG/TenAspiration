@@ -63,6 +63,8 @@ Route::middleware('auth')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::get('/aspiration-keluh-kesah', [AspirationKeluhKesahController::class, 'index'])->name('aspiration_keluhkesah.index');
     Route::get('/aspiration-keluh-kesah/{id}', [AspirationKeluhKesahController::class, 'show'])->name('aspiration_keluhkesah.show');
+    Route::delete('/aspiration-keluh-kesah/{id}', [AspirationKeluhKesahController::class, 'destroy'])->name('aspiration_keluhkesah.destroy');
+    Route::post('/aspiration-keluh-kesah/bulk-delete', [AspirationKeluhKesahController::class, 'bulkDestroy'])->name('aspiration_keluhkesah.bulk-destroy');
 
     // Export CSV for keluh-kesah (respecting filters passed as query string)
     Route::get('/aspiration-keluh-kesah/export/csv', [AspirationKeluhKesahController::class, 'exportCsv'])->name('aspiration_keluhkesah.export');
@@ -83,6 +85,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/aspiration-events/{id}/edit', [AspirationEventController::class, 'edit'])->name('aspiration_events.edit');
     Route::put('/aspiration-events/{id}', [AspirationEventController::class, 'update'])->name('aspiration_events.update');
     Route::delete('/aspiration-events/{id}', [AspirationEventController::class, 'destroy'])->name('aspiration_events.destroy');
+    Route::post('/aspiration-events-bulk-delete', [AspirationEventController::class, 'bulkDestroy'])->name('aspiration_events.bulk-destroy');
 
     // Menampilkan aspirasi berdasarkan event
     Route::get('/aspiration-events/event/{eventId}', [AspirationEventController::class, 'showAspirationByEvent'])

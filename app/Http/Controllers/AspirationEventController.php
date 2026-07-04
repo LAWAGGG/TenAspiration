@@ -109,7 +109,17 @@ class AspirationEventController extends Controller
         $aspiration = AspirationEvent::findOrFail($id);
         $aspiration->delete();
 
-        return redirect()->route('aspiration_events.index')->with('success', 'Aspirasi event berhasil dihapus!');
+        return response()->json(['message' => 'Aspirasi event berhasil dihapus']);
+    }
+
+    public function bulkDestroy(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'integer|exists:aspiration_events,id',
+        ]);
+        AspirationEvent::whereIn('id', $request->ids)->delete();
+        return response()->json(['message' => 'Aspirasi event berhasil dihapus']);
     }
 
 

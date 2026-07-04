@@ -15,16 +15,16 @@ class FormQuestionController extends Controller
             'questions.*.question_key' => 'required|string',
             'questions.*.question_label' => 'required|string',
             'questions.*.placeholder' => 'nullable|string',
-            'questions.*.is_required' => 'nullable|boolean',
+            'questions.*.is_required' => 'nullable|in:0,1,true,false',
         ]);
 
         if ($formType === 'event') {
-            if (!$entityId) {
+            if (! $entityId) {
                 return back()->with('error', 'ID Event diperlukan');
             }
-            
+
             FormQuestion::resetToDefault($formType, $entityId);
-            
+
             foreach ($validated['questions'] as $index => $question) {
                 $key = self::resolveQuestionKey($question['question_key'], $question['question_label']);
                 FormQuestion::create([
@@ -33,21 +33,15 @@ class FormQuestionController extends Controller
                     'question_key' => $key,
                     'question_label' => $question['question_label'],
                     'placeholder' => $question['placeholder'] ?? null,
-                    'is_required' => $question['is_required'] ?? true,
-                    'order' => $index,
+                    'is_required' => filter_var($question['is_required'] ?? false, FILTER_VALIDATE_BOOLEAN),
                 ]);
             }
-            
-            return Redirect::route('aspiration_events.by_event', $entityId)
-                ->with('success', 'Pertanyaan event berhasil diperbarui');
-        }
-        
-        if ($entityId) {
-            return back()->with('error', 'Form type ini tidak mendukung entity_id');
+
+            return back()->with('success', 'Pertanyaan event berhasil diperbarui');
         }
 
         FormQuestion::resetToDefault($formType, null);
-        
+
         foreach ($validated['questions'] as $index => $question) {
             $key = self::resolveQuestionKey($question['question_key'], $question['question_label']);
             FormQuestion::create([
@@ -56,7 +50,7 @@ class FormQuestionController extends Controller
                 'question_key' => $key,
                 'question_label' => $question['question_label'],
                 'placeholder' => $question['placeholder'] ?? null,
-                'is_required' => $question['is_required'] ?? true,
+                'is_required' => filter_var($question['is_required'] ?? false, FILTER_VALIDATE_BOOLEAN),
                 'order' => $index,
             ]);
         }
@@ -81,6 +75,7 @@ class FormQuestionController extends Controller
         if (preg_match('/^custom_\d{10,}$/', $currentKey)) {
             return self::labelToKey($label);
         }
+
         // Key sudah bermakna (built-in atau sudah di-set manual), pertahankan
         return $currentKey;
     }
@@ -94,6 +89,7 @@ class FormQuestionController extends Controller
         $key = mb_strtolower(trim($label));
         $key = preg_replace('/\s+/', '_', $key);
         $key = preg_replace('/[^\w]/', '', $key);
+
         return $key ?: 'pertanyaan';
     }
 
