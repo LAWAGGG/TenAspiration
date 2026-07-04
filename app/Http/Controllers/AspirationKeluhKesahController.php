@@ -159,7 +159,7 @@ class AspirationKeluhKesahController extends Controller
     {
         $request->validate([
             'ids' => 'required|array',
-            'ids.*' => 'integer|exists:aspiration_keluh_kesahs,id',
+            'ids.*' => 'integer|exists:aspiration_keluh_kesah,id',
         ]);
         AspirationKeluhKesah::whereIn('id', $request->ids)->delete();
         return response()->json(['message' => 'Berhasil dihapus']);
