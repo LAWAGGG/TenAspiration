@@ -46,8 +46,6 @@ Route::middleware('auth')->group(function () {
 //page aspirasi gelar wicara
 Route::middleware('auth')->group(function () {
     Route::get('/aspirations', [AspirationController::class, 'index'])->name('aspirations.index');
-    Route::get('/aspirations/{id}', [AspirationController::class, 'show'])->name('aspirations.show');
-    Route::get('/aspirations/{id}/edit', [AspirationController::class, 'edit'])->name('aspirations.edit');
     Route::put('/aspirations/{id}', [AspirationController::class, 'update'])->name('aspirations.update');
     Route::delete('/aspirations/{id}', [AspirationController::class, 'destroy'])->name('aspirations.destroy');
 
@@ -77,10 +75,6 @@ Route::middleware('auth')->group(function () {
 
 //page aspirasi tiap event
 Route::middleware('auth')->group(function () {
-    Route::get('/aspiration-events', [AspirationEventController::class, 'index'])->name('aspiration_events.index');
-
-    Route::get('/aspiration-events/{id}', [AspirationEventController::class, 'show'])->name('aspiration_events.show');
-    Route::get('/aspiration-events/{id}/edit', [AspirationEventController::class, 'edit'])->name('aspiration_events.edit');
     Route::put('/aspiration-events/{id}', [AspirationEventController::class, 'update'])->name('aspiration_events.update');
     Route::delete('/aspiration-events/{id}', [AspirationEventController::class, 'destroy'])->name('aspiration_events.destroy');
     Route::post('/aspiration-events-bulk-delete', [AspirationEventController::class, 'bulkDestroy'])->name('aspiration_events.bulk-destroy');

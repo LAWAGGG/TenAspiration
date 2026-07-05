@@ -8,6 +8,23 @@
     <link rel="icon" href="{{ asset('images/logo-mpk.jpg') }}" type="image/jpeg">
     @vite('resources/css/app.css')
     <script src="//unpkg.com/alpinejs" defer></script>
+    <script>
+        function notify() {
+            return {
+                show: false,
+                message: '',
+                type: 'error',
+                timeout: null,
+                showNotification(msg, type = 'error') {
+                    this.message = msg;
+                    this.type = type;
+                    this.show = true;
+                    clearTimeout(this.timeout);
+                    this.timeout = setTimeout(() => { this.show = false; }, 4000);
+                }
+            };
+        }
+    </script>
     <style>
         [x-cloak] { display: none !important; }
         @keyframes fadeInUp {
@@ -59,6 +76,16 @@
 
 <body class="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-100 py-10 px-4"
     x-data="aspirationApp()" @scroll.window="onWindowScroll()" x-init="init()">
+
+    <div x-data="notify()" @notify.window="showNotification($event.detail.message, $event.detail.type)"
+        class="fixed top-4 right-4 z-[9999] pointer-events-none">
+        <div x-show="show" x-transition:enter="transform ease-out duration-300 transition" x-transition:enter-start="translate-x-full opacity-0" x-transition:enter-end="translate-x-0 opacity-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+            :class="type === 'error' ? 'bg-red-500' : 'bg-green-500'"
+            class="text-white px-5 py-3 rounded-lg shadow-lg flex items-center gap-3 max-w-sm pointer-events-auto">
+            <span x-text="message" class="flex-1 text-sm font-medium"></span>
+            <button @click="show = false" class="text-white/80 hover:text-white font-bold text-lg leading-none">&times;</button>
+        </div>
+    </div>
 
     <!-- Header -->
     <div class="max-w-4xl mx-auto mb-8">
@@ -623,7 +650,7 @@
 
                 highlightText(text, query) {
                     if (!query || !text) return text;
-                    const escapedText = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    const escapedText = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/'/g, '&#x27;').replace(/"/g, '&quot;');
                     const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                     const regex = new RegExp(`(${escapedQuery})`, 'gi');
                     return escapedText.replace(regex, '<mark class="bg-yellow-200 px-0.5 rounded">$1</mark>');
@@ -781,11 +808,11 @@
                             this.selectedIds = [];
                             await this.fetchAspirations(true);
                         } else {
-                            alert(result.message || 'Gagal menghapus aspirasi');
+                            window.dispatchEvent(new CustomEvent('notify', { detail: { message: result.message || 'Gagal menghapus aspirasi', type: 'error' } }));
                         }
                     } catch (error) {
                         console.error('Gagal menghapus massal:', error);
-                        alert('Terjadi kesalahan saat menghapus');
+                        window.dispatchEvent(new CustomEvent('notify', { detail: { message: 'Terjadi kesalahan saat menghapus', type: 'error' } }));
                     } finally {
                         this.bulkLoading = false;
                         this.showBulkDeleteModal = false;
@@ -832,11 +859,11 @@
                         if (res.ok) {
                             this.shareUrl = result.url;
                         } else {
-                            alert(result.message || 'Gagal membuat link share');
+                            window.dispatchEvent(new CustomEvent('notify', { detail: { message: result.message || 'Gagal membuat link share', type: 'error' } }));
                         }
                     } catch (error) {
                         console.error('Gagal share:', error);
-                        alert('Terjadi kesalahan saat membuat link share');
+                        window.dispatchEvent(new CustomEvent('notify', { detail: { message: 'Terjadi kesalahan saat membuat link share', type: 'error' } }));
                     } finally {
                         this.shareLoading = false;
                     }

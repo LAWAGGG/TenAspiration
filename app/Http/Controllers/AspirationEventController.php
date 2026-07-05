@@ -9,23 +9,6 @@ use Illuminate\Http\Request;
 
 class AspirationEventController extends Controller
 {
-     public function aspirationForm(){
-        $events = Event::withCount('aspiration')->get();
-        $defaultQuestions = FormQuestion::getForForm('event');
-        $eventQuestions = [];
-        foreach ($events as $event) {
-            $eventQuestions[$event->id] = FormQuestion::getForForm('event', $event->id);
-        }
-        return view('aspiration_forms.event-form', compact('events', 'defaultQuestions', 'eventQuestions'));
-    }
-
-    public function index()
-    {
-        $aspirations = AspirationEvent::orderByDesc("created_at")->with(['event'])->get();
-        return view('aspiration_events.index', compact('aspirations'));
-    }
-
-
     public function store(Request $request)
     {
         $eventId = $request->event_id;
@@ -66,20 +49,6 @@ class AspirationEventController extends Controller
 
         return redirect()->back()->with('success', 'Aspirasi event berhasil dikirim!');
     }
-
-    public function show($id)
-    {
-        $aspiration = AspirationEvent::findOrFail($id);
-        return view('aspiration_events.show', compact('aspiration'));
-    }
-
-
-    public function edit($id)
-    {
-        $aspiration = AspirationEvent::findOrFail($id);
-        return view('aspiration_events.edit', compact('aspiration'));
-    }
-
 
     public function update(Request $request, $id)
     {

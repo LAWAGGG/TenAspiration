@@ -6,5 +6,5 @@ use Illuminate\Database\Eloquent\Model;
 
 class TargetEmail extends Model
 {
-    protected $guarded = [];
+    protected $fillable = ['email', 'is_active'];
 }

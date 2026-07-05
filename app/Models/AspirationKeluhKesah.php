@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class AspirationKeluhKesah extends Model
 {
     protected $table = "aspiration_keluh_kesah";
-    protected $guarded = [];
+    protected $fillable = ['phone_number', 'keluh_kesah', 'custom_answers'];
 
     protected $casts = [
         'custom_answers' => 'array',

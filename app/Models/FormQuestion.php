@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class FormQuestion extends Model
 {
-    protected $guarded = [];
+    protected $fillable = ['form_type', 'entity_id', 'question_key', 'question_label', 'placeholder', 'is_required', 'order'];
 
     protected $casts = ['is_required' => 'boolean'];
 

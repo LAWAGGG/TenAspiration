@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class SharedLink extends Model
 {
-    protected $guarded = [];
+    protected $fillable = ['token', 'type', 'selected_ids', 'filters', 'title', 'created_by'];
 
     protected $casts = [
         'selected_ids' => 'array',

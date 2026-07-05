@@ -75,7 +75,7 @@ class EventController extends Controller
             return redirect()->back()->withErrors($val)->withInput();
         }
 
-        $event->update($request->all());
+        $event->update($request->only(['name', 'description', 'date']));
 
         return redirect()->back()->with('success', 'Event berhasil diperbarui!');
     }

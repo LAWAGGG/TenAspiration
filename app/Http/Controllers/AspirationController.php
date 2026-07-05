@@ -131,18 +131,6 @@ class AspirationController extends Controller
         return redirect()->back()->with('success', 'Aspirasi berhasil dikirim!');
     }
 
-    public function show($id)
-    {
-        $aspiration = Aspiration::findOrFail($id);
-        return view('aspirations.show', compact('aspiration'));
-    }
-
-    public function edit($id)
-    {
-        $aspiration = Aspiration::findOrFail($id);
-        return view('aspirations.edit', compact('aspiration'));
-    }
-
     public function update(Request $request, $id)
     {
         $request->validate([
