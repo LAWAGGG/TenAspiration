@@ -32,7 +32,8 @@
                 </button>
             </form>
             <button
-                @click="eventToDelete = {{ $event->id }}; eventToDeleteName = {!! json_encode($event->name) !!}; showDeleteModal = true"
+                type="button"
+                @click="eventToDelete = {{ $event->id }}; eventToDeleteName = {{ json_encode($event->name) }}; showDeleteModal = true"
                 class="text-gray-400 hover:text-red-500 p-1 rounded-lg hover:bg-red-50 transition duration-200"
                 title="Hapus Event">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
