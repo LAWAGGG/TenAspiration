@@ -26,8 +26,9 @@ class AspirationEventController extends Controller
 
         $request->validate($rules);
 
-        $extracted = FormQuestion::extractAnswers('event', $request->all());
-        $data = $extracted['regular'];
+        $extracted = FormQuestion::extractAnswers('event', $request->except(['event_id']));
+        $builtInKeys = FormQuestion::getBuiltInKeys()['event'];
+        $data = array_merge(array_fill_keys($builtInKeys, null), $extracted['regular']);
         $data['event_id'] = $eventId;
         $data['custom_answers'] = !empty($extracted['custom']) ? $extracted['custom'] : null;
 
@@ -37,7 +38,9 @@ class AspirationEventController extends Controller
             "pantek","panteq","bajingan","badjingan","fuck","shit","asshole","anying","lonte","kontoI","4njing","babl","bacot",
         ];
 
-        foreach ($extracted['regular'] as $key => $value) {
+        $allAnswers = array_merge($extracted['regular'], $extracted['custom']);
+        foreach ($allAnswers as $key => $value) {
+            if (!is_string($value)) continue;
             foreach ($badWords as $word) {
                 if (stripos($value, $word) !== false) {
                     return back()->withErrors(['message' => "Pesan mengandung kata {$word}! tolong diubah"])->withInput();
@@ -63,8 +66,9 @@ class AspirationEventController extends Controller
 
         $request->validate($rules);
 
-        $extracted = FormQuestion::extractAnswers('event', $request->all());
-        $data = $extracted['regular'];
+        $extracted = FormQuestion::extractAnswers('event', $request->except(['event_id']));
+        $builtInKeys = FormQuestion::getBuiltInKeys()['event'];
+        $data = array_merge(array_fill_keys($builtInKeys, null), $extracted['regular']);
         $data['custom_answers'] = !empty($extracted['custom']) ? $extracted['custom'] : null;
 
         $aspiration->update($data);

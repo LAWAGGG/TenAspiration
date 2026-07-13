@@ -217,7 +217,7 @@
                                             class="font-normal text-gray-400">({{ $event->aspiration->count() }}
                                             Aspirasi)</span></h3>
                                     <button
-                                        @click="eventToDelete = {{ $event->id }}; eventToDeleteName = '{{ $event->name }}'; showDeleteModal = true"
+                                        @click="eventToDelete = {{ $event->id }}; eventToDeleteName = {!! json_encode($event->name) !!}; showDeleteModal = true"
                                         class="text-gray-400 hover:text-red-500 p-1 rounded-lg hover:bg-red-50 transition duration-200 flex-shrink-0 ml-2"
                                         title="Hapus Event">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"

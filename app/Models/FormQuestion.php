@@ -10,7 +10,7 @@ class FormQuestion extends Model
 
     protected $casts = ['is_required' => 'boolean'];
 
-    protected static function getBuiltInKeys(): array
+    public static function getBuiltInKeys(): array
     {
         return [
             'event' => ['message', 'kesan_pesan', 'bad_moment', 'perubahan_dari_event'],

@@ -74,6 +74,8 @@ class AspirationKeluhKesahController extends Controller
         $request->validate($rules);
 
         $extracted = FormQuestion::extractAnswers('keluh_kesah', $request->all());
+        $builtInKeys = FormQuestion::getBuiltInKeys()['keluh_kesah'];
+        $data = array_merge(array_fill_keys($builtInKeys, null), $extracted['regular']);
 
         $badWords = [
             "anjing",
@@ -115,15 +117,15 @@ class AspirationKeluhKesahController extends Controller
             "bacot"
         ];
 
-        foreach ($extracted['regular'] as $key => $value) {
+        $allAnswers = array_merge($extracted['regular'], $extracted['custom']);
+        foreach ($allAnswers as $key => $value) {
+            if (!is_string($value)) continue;
             foreach ($badWords as $word) {
                 if (stripos($value, $word) !== false) {
                     return back()->withErrors(['message' => "Pesan mengandung kata {$word}! tolong diubah"])->withInput();
                 }
             }
         }
-
-        $data = $extracted['regular'];
         $data['custom_answers'] = !empty($extracted['custom']) ? $extracted['custom'] : null;
 
         $record = AspirationKeluhKesah::create($data);
