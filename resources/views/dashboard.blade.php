@@ -470,8 +470,8 @@
 
                 get barTitle() {
                     return {
-                        all: 'Per Departemen',
-                        audiensi: 'Per Departemen',
+                        all: 'Per Bagian',
+                        audiensi: 'Per Bagian',
                         event: 'Per Event',
                         keluh_kesah: '',
                     }[this.selectedType] || '';
@@ -508,8 +508,8 @@
                     this.destroyCharts();
 
                     const colors = [
-                        '#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6',
-                        '#8b5cf6', '#ec4899', '#14b8a6', '#6366f1', '#a855f7',
+                        '#dc2626', '#ea580c', '#e11d48', '#f97316', '#b91c1c',
+                        '#f59e0b', '#be123c', '#ef4444', '#d97706', '#fb7185',
                     ];
                     const trendLabels = data.daily_totals.map(d => {
                         const p = d.date.split('-');
