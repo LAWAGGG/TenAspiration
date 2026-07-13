@@ -41,6 +41,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/events', [EventController::class, 'store'])->name('events.store');
     Route::put('/events/{event}', [EventController::class, 'update'])->name('events.update');
     Route::delete('/events/{event}', [EventController::class, 'destroy'])->name('events.destroy');
+    Route::patch('/events/{event}/visibility', [EventController::class, 'toggleVisibility'])->name('events.toggle-visibility');
 });
 
 //page aspirasi gelar wicara
@@ -71,6 +72,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/api/aspirations', [AspirationController::class, 'fetchPaginated'])->name('api.aspirations');
     Route::get('/api/aspiration-events/{eventId}', [AspirationEventController::class, 'fetchPaginatedByEvent'])->name('api.aspiration_events.by_event');
     Route::get('/api/aspiration-keluh-kesah', [AspirationKeluhKesahController::class, 'fetchPaginated'])->name('api.aspiration_keluhkesah');
+    Route::get('/api/statistics', [EventController::class, 'statistics'])->name('api.statistics');
 });
 
 //page aspirasi tiap event

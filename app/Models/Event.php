@@ -6,7 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class Event extends Model
 {
-    protected $fillable = ['name', 'description', 'date'];
+    protected $fillable = ['name', 'description', 'date', 'is_hidden'];
+
+    protected function casts(): array
+    {
+        return ['is_hidden' => 'boolean'];
+    }
 
     public function aspiration(){
         return $this->hasMany(AspirationEvent::class);

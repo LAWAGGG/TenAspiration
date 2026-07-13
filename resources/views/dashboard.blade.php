@@ -9,6 +9,7 @@
     <link rel="icon" href="{{ asset('images/logo-mpk.jpg') }}" type="image/jpeg">
     @vite('resources/css/app.css')
     <script src="//unpkg.com/alpinejs" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 </head>
 
 <body x-data="{
@@ -16,6 +17,7 @@
     showDeleteModal: false,
     eventToDelete: null,
     eventToDeleteName: '',
+    showHidden: false,
     deleteUrl() {
         return '{{ route('events.destroy', ':id') }}'.replace(':id', this.eventToDelete);
     }
@@ -190,7 +192,7 @@
 
             <!-- Events Section -->
             <div class="bg-white rounded-2xl shadow-sm border border-red-100 p-4 md:p-6">
-                <div class="flex items-center justify-between mb-4 md:mb-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 md:mb-6">
                     <h2 class="text-lg md:text-xl font-bold text-gray-900 flex items-center space-x-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 md:h-5 md:w-5 text-red-500"
                             fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -199,84 +201,145 @@
                         </svg>
                         <span>Daftar Event</span>
                     </h2>
-                    <span
-                        class="bg-red-100 text-red-600 px-2 py-1 md:px-3 md:py-1 rounded-full text-xs md:text-sm font-medium">
-                        {{ $events->count() }} Event
-                    </span>
+                    <div class="flex items-center gap-2">
+                        <button @click="showHidden = !showHidden"
+                            :class="showHidden ? 'bg-gray-200 text-gray-700' : 'bg-gray-100 text-gray-500 hover:text-gray-700'"
+                            class="px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                            </svg>
+                            <span x-text="showHidden ? 'Semua Event' : 'Tersembunyi'"></span>
+                        </button>
+                        <span
+                            class="bg-red-100 text-red-600 px-2 py-1 md:px-3 md:py-1 rounded-full text-xs md:text-sm font-medium">
+                            {{ $events->count() }} Event
+                        </span>
+                    </div>
                 </div>
 
-                @if ($events->count() > 0)
+                @php $visibleEvents = $events->where('is_hidden', false); $hiddenEvents = $events->where('is_hidden', true); @endphp
+
+                @if ($visibleEvents->count() > 0)
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                        @foreach ($events as $event)
-                            <div
-                                class="bg-gradient-to-br from-white to-red-50 rounded-xl border border-red-200 p-4 md:p-5 hover:shadow-md transition duration-200 group">
-                                <div class="flex justify-between items-start mb-3">
-                                    <h3
-                                        class="font-bold text-gray-900 text-base md:text-lg group-hover:text-red-600 transition duration-200 line-clamp-2">
-                                        {{ $event->name }} <span
-                                            class="font-normal text-gray-400">({{ $event->aspiration->count() }}
-                                            Aspirasi)</span></h3>
-                                    <button
-                                        @click="eventToDelete = {{ $event->id }}; eventToDeleteName = {!! json_encode($event->name) !!}; showDeleteModal = true"
-                                        class="text-gray-400 hover:text-red-500 p-1 rounded-lg hover:bg-red-50 transition duration-200 flex-shrink-0 ml-2"
-                                        title="Hapus Event">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
-                                            viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                        </svg>
-                                    </button>
-                                </div>
-
-                                <p class="text-gray-600 text-xs md:text-sm mb-3 md:mb-4 line-clamp-2">
-                                    {{ $event->description ?? 'Tidak ada deskripsi' }}
-                                </p>
-
-                                <div
-                                    class="flex items-center justify-between text-xs md:text-sm text-gray-500 mb-3 md:mb-4">
-                                    <div class="flex items-center space-x-1">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 md:h-4 md:w-4"
-                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                        </svg>
-                                        <span>{{ \Carbon\Carbon::parse($event->date)->translatedFormat('d M Y') }}</span>
-                                    </div>
-                                </div>
-
-                                <a href="{{ route('aspiration_events.by_event', $event->id) }}"
-                                    class="w-full bg-red-500 hover:bg-red-600 text-white py-2 px-3 md:py-2 md:px-4 rounded-lg transition duration-200 flex items-center justify-center space-x-2 text-xs md:text-sm font-medium">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 md:h-4 md:w-4"
-                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                    </svg>
-                                    <span>Lihat Aspirasi</span>
-                                </a>
-                            </div>
+                        @foreach ($visibleEvents as $event)
+                            @include('dashboard._event_card', ['event' => $event, 'hidden' => false])
                         @endforeach
                     </div>
                 @else
                     <div class="text-center py-8 md:py-12">
                         <div class="bg-red-50 p-4 md:p-6 rounded-2xl inline-block mb-3 md:mb-4">
-                            <svg xmlns="http://www.w3.org/2000/svg"
-                                class="h-8 w-8 md:h-12 md:w-12 text-red-400 mx-auto" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 md:h-12 md:w-12 text-red-400 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
                         </div>
                         <h3 class="text-base md:text-lg font-semibold text-gray-900 mb-2">Belum ada event</h3>
-                        <p class="text-gray-600 text-sm md:text-base mb-3 md:mb-4">Mulai dengan membuat event pertama
-                            Anda</p>
+                        <p class="text-gray-600 text-sm md:text-base mb-3 md:mb-4">Mulai dengan membuat event pertama Anda</p>
                         <button @click="showAddModal = true"
                             class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 md:px-6 md:py-2 rounded-lg transition duration-200 font-medium text-sm md:text-base">
                             Buat Event Pertama
                         </button>
                     </div>
                 @endif
+
+                {{-- Hidden events section --}}
+                <div x-show="showHidden" x-cloak class="mt-6 pt-6 border-t border-gray-200">
+                    <div class="flex items-center gap-2 mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                        </svg>
+                        <h3 class="text-sm font-semibold text-gray-500">Event Tersembunyi</h3>
+                        <span class="bg-gray-200 text-gray-500 px-2 py-0.5 rounded-full text-xs">{{ $hiddenEvents->count() }}</span>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                        @foreach ($hiddenEvents as $event)
+                            @include('dashboard._event_card', ['event' => $event, 'hidden' => true])
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+
+            {{-- Chart Section --}}
+            <div class="mt-6 md:mt-8 bg-white rounded-2xl shadow-sm border border-red-100 p-4 md:p-6" x-data="chartApp()" x-init="initCharts()">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 md:mb-6">
+                    <h2 class="text-lg md:text-xl font-bold text-gray-900 flex items-center space-x-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 md:h-5 md:w-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                        <span>Statistik</span>
+                    </h2>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-gray-400">30 hari terakhir</span>
+                        <button @click="refreshCharts()" class="text-gray-400 hover:text-red-500 transition p-1" title="Muat ulang">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                {{-- Tabs --}}
+                <div class="flex gap-1 mb-5 bg-gray-100 rounded-xl p-1 overflow-x-auto">
+                    <template x-for="tab in tabs" :key="tab.key">
+                        <button @click="switchTab(tab.key)"
+                            :class="selectedType === tab.key ? 'bg-white text-red-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'"
+                            class="px-4 py-2 text-sm font-medium rounded-lg transition whitespace-nowrap">
+                            <span x-text="tab.label"></span>
+                        </button>
+                    </template>
+                </div>
+
+                <div x-show="loading" class="flex items-center justify-center py-12">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+                </div>
+
+                <template x-if="!loading && error">
+                    <div class="text-center py-8 text-red-500 text-sm">
+                        Gagal memuat statistik. <button @click="refreshCharts()" class="underline">Coba lagi</button>
+                    </div>
+                </template>
+
+                <div x-show="!loading && !error" x-cloak>
+                    {{-- Trend Chart --}}
+                    <div class="mb-6 md:mb-8">
+                        <h3 class="text-sm font-semibold text-gray-700 mb-3">Tren Harian</h3>
+                        <div class="relative" style="height: 280px;">
+                            <canvas x-ref="trendChart" class="w-full h-full"></canvas>
+                        </div>
+                    </div>
+
+                    {{-- Secondary charts --}}
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {{-- Bar: per dept (all/audiensi) or per event (event) --}}
+                        <div x-show="selectedType !== 'keluh_kesah'">
+                            <h3 class="text-sm font-semibold text-gray-700 mb-3" x-text="barTitle"></h3>
+                            <div class="relative" style="height: 300px;">
+                                <canvas x-ref="barChart" class="w-full h-full"></canvas>
+                            </div>
+                        </div>
+
+                        {{-- Donut: only all --}}
+                        <div x-show="selectedType === 'all'">
+                            <h3 class="text-sm font-semibold text-gray-700 mb-3">Distribusi Tipe</h3>
+                            <div class="relative" style="height: 300px;">
+                                <canvas x-ref="donutChart" class="w-full h-full"></canvas>
+                            </div>
+                        </div>
+
+                        {{-- Class: only audiensi --}}
+                        <div x-show="selectedType === 'audiensi'">
+                            <h3 class="text-sm font-semibold text-gray-700 mb-3">Per Kelas</h3>
+                            <div class="relative" style="height: 300px;">
+                                <canvas x-ref="classChart" class="w-full h-full"></canvas>
+                            </div>
+                        </div>
+
+                        {{-- Keluh kesah placeholder --}}
+                        <div x-show="selectedType === 'keluh_kesah'"
+                            class="flex items-center justify-center h-full py-12">
+                            <p class="text-gray-400 text-sm">Pilih tab lain untuk melihat breakdown detail.</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -390,6 +453,185 @@
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('chartApp', () => ({
+                loading: true,
+                error: false,
+                selectedType: 'all',
+                chartInstances: [],
+                tabs: [
+                    { key: 'all', label: 'Semua' },
+                    { key: 'audiensi', label: 'Audiensi' },
+                    { key: 'event', label: 'Event' },
+                    { key: 'keluh_kesah', label: 'Keluh Kesah' },
+                ],
+
+                get barTitle() {
+                    return {
+                        all: 'Per Departemen',
+                        audiensi: 'Per Departemen',
+                        event: 'Per Event',
+                        keluh_kesah: '',
+                    }[this.selectedType] || '';
+                },
+
+                async fetchStats() {
+                    this.error = false;
+                    try {
+                        const res = await fetch('{{ route("api.statistics") }}?type=' + this.selectedType);
+                        if (!res.ok) throw new Error('Failed');
+                        return await res.json();
+                    } catch (e) {
+                        this.error = true;
+                        return null;
+                    }
+                },
+
+                switchTab(type) {
+                    this.selectedType = type;
+                    this.loading = true;
+                    this.fetchStats().then(data => {
+                        this.loading = false;
+                        if (data) {
+                            this.$nextTick(() => this.buildCharts(data));
+                        }
+                    });
+                },
+
+                initCharts() {
+                    this.switchTab('all');
+                },
+
+                buildCharts(data) {
+                    this.destroyCharts();
+
+                    const colors = [
+                        '#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6',
+                        '#8b5cf6', '#ec4899', '#14b8a6', '#6366f1', '#a855f7',
+                    ];
+                    const trendLabels = data.daily_totals.map(d => {
+                        const p = d.date.split('-');
+                        return p[2] + '/' + p[1];
+                    });
+
+                    const trendDs = [];
+                    if (this.selectedType === 'all') {
+                        trendDs.push({ label: 'Audiensi', data: data.daily_totals.map(d => d.aspirations), borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', fill: true, tension: 0.3, pointRadius: 2 });
+                        trendDs.push({ label: 'Event', data: data.daily_totals.map(d => d.events), borderColor: '#f97316', backgroundColor: 'rgba(249,115,22,0.1)', fill: true, tension: 0.3, pointRadius: 2 });
+                        trendDs.push({ label: 'Keluh Kesah', data: data.daily_totals.map(d => d.keluh_kesah), borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.1)', fill: true, tension: 0.3, pointRadius: 2 });
+                    } else if (this.selectedType === 'audiensi') {
+                        trendDs.push({ label: 'Audiensi', data: data.daily_totals.map(d => d.aspirations), borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.15)', fill: true, tension: 0.3, pointRadius: 3 });
+                    } else if (this.selectedType === 'event') {
+                        trendDs.push({ label: 'Event', data: data.daily_totals.map(d => d.events), borderColor: '#f97316', backgroundColor: 'rgba(249,115,22,0.15)', fill: true, tension: 0.3, pointRadius: 3 });
+                    } else {
+                        trendDs.push({ label: 'Keluh Kesah', data: data.daily_totals.map(d => d.keluh_kesah), borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.15)', fill: true, tension: 0.3, pointRadius: 3 });
+                    }
+
+                    const trendCtx = this.$refs.trendChart.getContext('2d');
+                    this.chartInstances.push(new Chart(trendCtx, {
+                        type: 'line',
+                        data: { labels: trendLabels, datasets: trendDs },
+                        options: {
+                            responsive: true, maintainAspectRatio: false,
+                            interaction: { mode: 'index', intersect: false },
+                            plugins: {
+                                legend: { position: 'bottom', labels: { boxWidth: 12, padding: 12, font: { size: 11 } } }
+                            },
+                            scales: {
+                                x: { grid: { display: false }, ticks: { font: { size: 10 }, maxTicksLimit: 15 } },
+                                y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 10 } } }
+                            }
+                        }
+                    }));
+
+                    // Bar chart (dept for all/audiensi, event for event)
+                    const barData = data.by_department || data.by_event;
+                    const barLabelKey = data.by_department ? 'department' : 'event';
+                    if (barData && barData.length) {
+                        const ctx = this.$refs.barChart.getContext('2d');
+                        this.chartInstances.push(new Chart(ctx, {
+                            type: 'bar',
+                            data: {
+                                labels: barData.map(d => d[barLabelKey]),
+                                datasets: [{
+                                    label: 'Jumlah',
+                                    data: barData.map(d => d.total),
+                                    backgroundColor: barData.map((_, i) => colors[i % colors.length]),
+                                    borderRadius: 4,
+                                }]
+                            },
+                            options: {
+                                responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+                                plugins: { legend: { display: false } },
+                                scales: {
+                                    x: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 10 } } },
+                                    y: { ticks: { font: { size: 10 } } }
+                                }
+                            }
+                        }));
+                    }
+
+                    // Class chart (audiensi)
+                    if (data.by_class && data.by_class.length) {
+                        const ctx = this.$refs.classChart.getContext('2d');
+                        this.chartInstances.push(new Chart(ctx, {
+                            type: 'bar',
+                            data: {
+                                labels: data.by_class.map(d => d.class),
+                                datasets: [{
+                                    label: 'Jumlah',
+                                    data: data.by_class.map(d => d.total),
+                                    backgroundColor: ['#3b82f6', '#f97316', '#22c55e'],
+                                    borderRadius: 4,
+                                }]
+                            },
+                            options: {
+                                responsive: true, maintainAspectRatio: false,
+                                plugins: { legend: { display: false } },
+                                scales: {
+                                    x: { grid: { display: false }, ticks: { font: { size: 12 } } },
+                                    y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 10 } } }
+                                }
+                            }
+                        }));
+                    }
+
+                    // Donut (only for 'all')
+                    if (data.by_type) {
+                        const ctx = this.$refs.donutChart.getContext('2d');
+                        this.chartInstances.push(new Chart(ctx, {
+                            type: 'doughnut',
+                            data: {
+                                labels: ['Audiensi', 'Event', 'Keluh Kesah'],
+                                datasets: [{
+                                    data: [data.by_type.aspirations, data.by_type.events, data.by_type.keluh_kesah],
+                                    backgroundColor: ['#3b82f6', '#f97316', '#22c55e'],
+                                    borderWidth: 2,
+                                }]
+                            },
+                            options: {
+                                responsive: true, maintainAspectRatio: false, cutout: '65%',
+                                plugins: {
+                                    legend: { position: 'bottom', labels: { boxWidth: 12, padding: 12, font: { size: 11 } } }
+                                }
+                            }
+                        }));
+                    }
+                },
+
+                destroyCharts() {
+                    this.chartInstances.forEach(c => c.destroy());
+                    this.chartInstances = [];
+                },
+
+                refreshCharts() {
+                    this.switchTab(this.selectedType);
+                }
+            }));
+        });
+    </script>
 </body>
 
 </html>
