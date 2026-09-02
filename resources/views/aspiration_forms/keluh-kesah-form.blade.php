@@ -72,6 +72,20 @@
                 @foreach ($keluhKesahQuestions as $question)
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">{{ $question['question_label'] }}</label>
+                    
+                    @php
+                        $qType = $question['question_type'] ?? 'essay';
+                        $rawOptions = $question['question_options'];
+                        $opts = [];
+                        if (is_string($rawOptions)) {
+                            $decoded = json_decode($rawOptions, true);
+                            $opts = $decoded['options'] ?? [];
+                        } elseif (is_array($rawOptions)) {
+                            $opts = $rawOptions['options'] ?? [];
+                        }
+                    @endphp
+                    
+                    @if ($qType === 'essay')
                     @if ($question['question_key'] === 'keluh_kesah')
                     <textarea name="{{ $question['question_key'] }}" rows="5" {{ $question['is_required'] ? 'required' : '' }}
                         class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-300 focus:border-red-300 transition"
@@ -80,6 +94,33 @@
                     <input type="text" name="{{ $question['question_key'] }}" value="{{ old($question['question_key']) }}" {{ $question['is_required'] ? 'required' : '' }}
                         class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-300 focus:border-red-300 transition"
                         placeholder="{{ $question['placeholder'] ?? '' }}" />
+                    @endif
+                    
+                    @elseif ($qType === 'pilihan_ganda')
+                    <div class="space-y-2">
+                        @foreach ($opts as $optIdx => $opt)
+                        <div class="flex items-center gap-2 p-2 rounded-lg border border-gray-100 hover:bg-red-50 transition-colors">
+                            <input type="radio" name="{{ $question['question_key'] }}" value="{{ $opt }}"
+                                {{ (old($question['question_key']) === $opt) ? 'checked' : '' }}
+                                {{ $question['is_required'] ? 'required' : '' }}
+                                class="h-4 w-4 border-gray-300 text-red-600 focus:ring-red-500 cursor-pointer">
+                            <span class="text-sm text-gray-700">{{ $opt }}</span>
+                        </div>
+                        @endforeach
+                    </div>
+                    
+                    @elseif ($qType === 'checkbox')
+                    <div class="space-y-2">
+                        @php $oldVals = is_array(old($question['question_key'])) ? old($question['question_key']) : []; @endphp
+                        @foreach ($opts as $optIdx => $opt)
+                        <div class="flex items-center gap-2 p-2 rounded-lg border border-gray-100 hover:bg-red-50 transition-colors">
+                            <input type="checkbox" name="{{ $question['question_key'] }}[]" value="{{ $opt }}"
+                                {{ in_array($opt, $oldVals) ? 'checked' : '' }}
+                                class="h-4 w-4 rounded border-gray-300 text-red-600 focus:ring-red-500 cursor-pointer">
+                            <span class="text-sm text-gray-700">{{ $opt }}</span>
+                        </div>
+                        @endforeach
+                    </div>
                     @endif
                 </div>
                 @endforeach

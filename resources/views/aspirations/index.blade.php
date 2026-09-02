@@ -497,7 +497,7 @@
                     <form method="POST" action="{{ route('form_questions.update', 'audiensi') }}">
                         @csrf
                         @method('PUT')
-                        <div class="space-y-4 mb-4 max-h-96 overflow-y-auto">
+                        <div class="space-y-4 mb-4 max-h-[60vh] overflow-y-auto">
                             <template x-for="(q, index) in editQuestions" :key="index">
                                 <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
                                     <div class="flex items-center justify-between mb-2">
@@ -519,16 +519,81 @@
                                             <input type="hidden" :name="'questions[' + index + '][question_key]'" :value="q.question_key">
                                         </div>
                                         <div>
+                                            <label class="block text-xs font-medium text-gray-600 mb-1">Tipe Soal</label>
+                                            <select x-model="q.question_type"
+                                                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-purple-400">
+                                                <option value="essay">Essay (Uraian)</option>
+                                                <option value="pilihan_ganda">Pilihan Ganda</option>
+                                                <option value="checkbox">Checkbox (Multiple Choice)</option>
+                                            </select>
+                                        </div>
+                                        <div x-show="q.question_type === 'pilihan_ganda'" class="space-y-2">
+                                            <div class="flex items-center justify-between">
+                                                <label class="block text-xs font-medium text-gray-600">Opsi Pilihan</label>
+                                                <button type="button" @click="addOption(index)"
+                                                    class="text-xs text-purple-600 hover:text-purple-800 font-medium">+ Tambah Opsi</button>
+                                            </div>
+                                            <template x-for="(opt, oIndex) in getOptions(q)" :key="oIndex">
+                                                <div class="flex items-center gap-2">
+                                                    <input type="radio" :name="'questions[' + index + '][correct_answer]'" :value="opt"
+                                                        class="h-4 w-4 text-purple-600 focus:ring-purple-500" title="Tandai jawaban benar"
+                                                        :disabled="opt === ''">
+                                                    <input type="text" :value="opt"
+                                                        @input="q.question_options.options[oIndex] = $event.target.value"
+                                                        :placeholder="'Opsi ' + (oIndex + 1)"
+                                                        class="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-purple-400">
+                                                    <button type="button" @click="removeOption(index, oIndex)"
+                                                        class="text-red-500 hover:text-red-700 p-1" title="Hapus opsi"
+                                                        x-show="getOptions(q).length > 2">
+                                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            </template>
+                                            <p class="text-xs text-gray-400 mt-1">Centang radio button untuk tandai jawaban benar</p>
+                                        </div>
+                                        <div x-show="q.question_type === 'checkbox'" class="space-y-2">
+                                            <div class="flex items-center justify-between">
+                                                <label class="block text-xs font-medium text-gray-600">Opsi Pilihan</label>
+                                                <button type="button" @click="addOption(index)"
+                                                    class="text-xs text-purple-600 hover:text-purple-800 font-medium">+ Tambah Opsi</button>
+                                            </div>
+                                            <template x-for="(opt, oIndex) in getOptions(q)" :key="oIndex">
+                                                <div class="flex items-center gap-2">
+                                                    <input type="checkbox" :name="'questions[' + index + '][correct_answers][]'" :value="opt"
+                                                        class="h-4 w-4 text-purple-600 rounded focus:ring-purple-500" title="Tandai sebagai jawaban benar"
+                                                        x-model="((q.question_options.correct_answers || []).includes(opt))"
+                                                        :disabled="opt === ''">
+                                                    <input type="text" :value="opt"
+                                                        @input="q.question_options.options[oIndex] = $event.target.value; if(!q.question_options.correct_answers.includes($event.target.value)) q.question_options.correct_answers.push($event.target.value)"
+                                                        :placeholder="'Opsi ' + (oIndex + 1)"
+                                                        class="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-purple-400">
+                                                    <button type="button" @click="removeOption(index, oIndex)"
+                                                        class="text-red-500 hover:text-red-700 p-1" title="Hapus opsi"
+                                                        x-show="getOptions(q).length > 2">
+                                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            </template>
+                                            <p class="text-xs text-gray-400 mt-1">Centang checkbox untuk tandai jawaban benar (bisa lebih dari satu)</p>
+                                        </div>
+                                        <div>
                                             <label class="block text-xs font-medium text-gray-600 mb-1">Placeholder</label>
                                             <input type="text" x-model="q.placeholder" :name="'questions[' + index + '][placeholder]'"
                                                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-purple-400">
                                         </div>
 <div class="flex items-center gap-2">
-                                             <input type="hidden" :name="'questions[' + index + '][is_required]'" :value="q.is_required ? '1' : '0'">
-                                             <input type="checkbox" x-model="q.is_required"
-                                                 class="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500">
-                                             <label class="text-xs font-medium text-gray-600">Wajib diisi</label>
-                                         </div>
+                                              <input type="hidden" :name="'questions[' + index + '][is_required]'" :value="q.is_required ? '1' : '0'">
+                                              <input type="checkbox" x-model="q.is_required"
+                                                  class="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500">
+                                              <label class="text-xs font-medium text-gray-600">Wajib diisi</label>
+                                          </div>
+                                        <input type="hidden" :name="'questions[' + index + '][question_type]'" :value="q.question_type">
+                                        <input type="hidden" :name="'questions[' + index + '][question_options]'"
+                                            :value="JSON.stringify(q.question_options)">
                                     </div>
                                 </div>
                             </template>
@@ -616,6 +681,8 @@
                 editQuestions: @json($questions).map(q => ({
                     question_key: q.question_key,
                     question_label: q.question_label,
+                    question_type: q.question_type || 'essay',
+                    question_options: q.question_options && typeof q.question_options === 'string' ? JSON.parse(q.question_options) : (q.question_options || {}),
                     placeholder: q.placeholder || '',
                     is_required: !!q.is_required
                 })),
@@ -624,6 +691,8 @@
                     this.editQuestions.push({
                         question_key: 'custom_' + Date.now(),
                         question_label: 'Pertanyaan Baru',
+                        question_type: 'essay',
+                        question_options: {},
                         placeholder: '',
                         is_required: true
                     });
@@ -633,6 +702,23 @@
                     if (this.editQuestions.length > 1) {
                         this.editQuestions.splice(index, 1);
                     }
+                },
+
+                addOption(qIndex) {
+                    const q = this.editQuestions[qIndex];
+                    if (!q.question_options.options) q.question_options.options = [];
+                    q.question_options.options.push('');
+                },
+
+                removeOption(qIndex, oIndex) {
+                    const q = this.editQuestions[qIndex];
+                    if (q.question_options.options && q.question_options.options.length > 2) {
+                        q.question_options.options.splice(oIndex, 1);
+                    }
+                },
+
+                getOptions(q) {
+                    return q.question_options?.options || [''];
                 },
 
                 resetQuestions() {

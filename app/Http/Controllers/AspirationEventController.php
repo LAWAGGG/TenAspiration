@@ -17,7 +17,12 @@ class AspirationEventController extends Controller
         $rules = ['event_id' => 'required|exists:events,id'];
         foreach ($questions as $q) {
             $key = $q['question_key'];
-            if ($q['is_required']) {
+            $type = $q['question_type'] ?? 'essay';
+            $required = $q['is_required'] ?? true;
+            if ($type === 'checkbox') {
+                $rules[$key] = $required ? 'required|array|min:1' : 'nullable|array';
+                $rules[$key . '.*'] = 'string';
+            } elseif ($required) {
                 $rules[$key] = 'required|string';
             } else {
                 $rules[$key] = 'nullable|string';
@@ -27,6 +32,8 @@ class AspirationEventController extends Controller
         $request->validate($rules);
 
         $extracted = FormQuestion::extractAnswers('event', $request->except(['event_id']));
+        $extracted['regular'] = FormQuestion::flattenAnswers($extracted['regular']);
+        $extracted['custom'] = FormQuestion::flattenAnswers($extracted['custom']);
         $builtInKeys = FormQuestion::getBuiltInKeys()['event'];
         $data = array_merge(array_fill_keys($builtInKeys, null), $extracted['regular']);
         $data['event_id'] = $eventId;
@@ -61,12 +68,23 @@ class AspirationEventController extends Controller
         $rules = [];
         foreach ($questions as $q) {
             $key = $q['question_key'];
-            $rules[$key] = $q['is_required'] ? 'required|string' : 'nullable|string';
+            $type = $q['question_type'] ?? 'essay';
+            $required = $q['is_required'] ?? true;
+            if ($type === 'checkbox') {
+                $rules[$key] = $required ? 'required|array|min:1' : 'nullable|array';
+                $rules[$key . '.*'] = 'string';
+            } elseif ($required) {
+                $rules[$key] = 'required|string';
+            } else {
+                $rules[$key] = 'nullable|string';
+            }
         }
 
         $request->validate($rules);
 
         $extracted = FormQuestion::extractAnswers('event', $request->except(['event_id']));
+        $extracted['regular'] = FormQuestion::flattenAnswers($extracted['regular']);
+        $extracted['custom'] = FormQuestion::flattenAnswers($extracted['custom']);
         $builtInKeys = FormQuestion::getBuiltInKeys()['event'];
         $data = array_merge(array_fill_keys($builtInKeys, null), $extracted['regular']);
         $data['custom_answers'] = !empty($extracted['custom']) ? $extracted['custom'] : null;

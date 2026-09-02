@@ -72,6 +72,24 @@ class AspirationController extends Controller
             "kelas" => "required|in:X,XI,XII",
         ]);
 
+        $questions = FormQuestion::getForForm('audiensi');
+        $messageRules = [];
+        foreach ($questions as $q) {
+            $key = $q['question_key'];
+            $type = $q['question_type'] ?? 'essay';
+            $required = $q['is_required'] ?? true;
+
+            if ($type === 'checkbox') {
+                $messageRules["messages.$key"] = $required ? 'required|array|min:1' : 'nullable|array';
+                $messageRules["messages.$key.*"] = 'string';
+            } elseif ($type === 'pilihan_ganda') {
+                $messageRules["messages.$key"] = $required ? 'required|string' : 'nullable|string';
+            } else {
+                $messageRules["messages.$key"] = $required ? 'required|string' : 'nullable|string';
+            }
+        }
+        $request->validate($messageRules);
+
         $badWords = [
             "anjing",
             "bangsat",
@@ -113,7 +131,10 @@ class AspirationController extends Controller
         ];
 
         foreach ($request->messages as $tujuan => $pesan) {
-            if (trim($pesan) === "") continue;
+            if (is_array($pesan)) {
+                $pesan = implode(', ', array_values(array_filter($pesan, fn ($v) => $v !== null && $v !== '')));
+            }
+            if (trim((string) $pesan) === "") continue;
 
             foreach ($badWords as $word) {
                 if (stripos($pesan, $word) !== false) {

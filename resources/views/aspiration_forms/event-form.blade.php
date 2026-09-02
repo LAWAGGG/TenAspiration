@@ -264,9 +264,44 @@
                             <span x-text="q.question_label"></span>
                             <span x-show="!q.is_required" class="text-gray-400 text-xs ml-1">(opsional)</span>
                         </label>
-                        <textarea :name="q.question_key" :placeholder="q.placeholder" rows="4" :required="q.is_required"
-                            x-init="$el.value = oldInput[q.question_key] ?? ''"
-                            class="custom-textarea w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300 transition"></textarea>
+                        
+                        <!-- Essay -->
+                        <template x-if="!q.question_type || q.question_type === 'essay'">
+                            <div>
+                                <textarea :name="q.question_key" :placeholder="q.placeholder" rows="4" :required="q.is_required"
+                                    x-init="$el.value = oldInput[q.question_key] ?? ''"
+                                    class="custom-textarea w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300 transition"></textarea>
+                            </div>
+                        </template>
+                        
+                        <!-- Pilihan Ganda -->
+                        <template x-if="q.question_type === 'pilihan_ganda'">
+                            <div class="space-y-2">
+                                <template x-for="(opt, optIdx) in getOptions(q)" :key="optIdx">
+                                    <div class="flex items-center gap-2 p-2 rounded-lg border border-gray-100 hover:bg-blue-50 transition-colors">
+                                        <input type="radio" :id="'pg_' + index + '_' + optIdx" :name="q.question_key" :value="opt"
+                                            x-init="$el.checked = oldInput[q.question_key] === opt"
+                                            :required="q.is_required"
+                                            class="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
+                                        <label :for="'pg_' + index + '_' + optIdx" class="text-sm text-gray-700 cursor-pointer flex-1" x-text="opt"></label>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                        
+                        <!-- Checkbox -->
+                        <template x-if="q.question_type === 'checkbox'">
+                            <div class="space-y-2">
+                                <template x-for="(opt, optIdx) in getOptions(q)" :key="optIdx">
+                                    <div class="flex items-center gap-2 p-2 rounded-lg border border-gray-100 hover:bg-blue-50 transition-colors">
+                                        <input type="checkbox" :id="'chk_' + index + '_' + optIdx" :name="q.question_key + '[]'" :value="opt"
+                                            x-init="checkEventCheckbox($el, oldInput[q.question_key], opt)"
+                                            class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
+                                        <label :for="'chk_' + index + '_' + optIdx" class="text-sm text-gray-700 cursor-pointer flex-1" x-text="opt"></label>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
                     </div>
                 </template>
 
@@ -359,7 +394,7 @@
                     selectedEventId: '',
                     selectedEventName: '-- Pilih Event --',
                     events: d.events,
-                    eventQuestions: d.eventQuestions,
+                    eventQuestions: {},
 
                     init() {
                         if (d.hasSuccess) {
@@ -372,6 +407,15 @@
                                 this.selectedEventName = evt.name;
                             }
                         }
+                        // Parse question_options from JSON string to object
+                        for (const eventId in d.eventQuestions) {
+                            this.eventQuestions[eventId] = d.eventQuestions[eventId].map(q => {
+                                if (q.question_options && typeof q.question_options === 'string') {
+                                    try { q = { ...q, question_options: JSON.parse(q.question_options) }; } catch(e) {}
+                                }
+                                return q;
+                            });
+                        }
                     },
 
                     get oldInput() {
@@ -381,6 +425,16 @@
                     get currentQuestions() {
                         if (!this.selectedEventId) return [];
                         return this.eventQuestions[this.selectedEventId] || [];
+                    },
+
+                    checkEventCheckbox(el, savedValues, value) {
+                        const vals = Array.isArray(savedValues) ? savedValues : (savedValues ? [savedValues] : []);
+                        el.checked = vals.includes(value);
+                    },
+
+                    getOptions(q) {
+                        const opts = (q.question_options?.options || []).filter(o => o && o.trim() !== '');
+                        return opts;
                     }
                 };
             });

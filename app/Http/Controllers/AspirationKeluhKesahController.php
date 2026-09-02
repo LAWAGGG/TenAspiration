@@ -62,9 +62,14 @@ class AspirationKeluhKesahController extends Controller
         $rules = [];
         foreach ($questions as $q) {
             $key = $q['question_key'];
+            $type = $q['question_type'] ?? 'essay';
+            $required = $q['is_required'] ?? true;
             if ($key === 'phone_number') {
                 $rules[$key] = 'nullable|string|digits_between:8,15';
-            } elseif ($q['is_required']) {
+            } elseif ($type === 'checkbox') {
+                $rules[$key] = $required ? 'required|array|min:1' : 'nullable|array';
+                $rules[$key . '.*'] = 'string';
+            } elseif ($required) {
                 $rules[$key] = 'required|string';
             } else {
                 $rules[$key] = 'nullable|string';
@@ -74,6 +79,8 @@ class AspirationKeluhKesahController extends Controller
         $request->validate($rules);
 
         $extracted = FormQuestion::extractAnswers('keluh_kesah', $request->all());
+        $extracted['regular'] = FormQuestion::flattenAnswers($extracted['regular']);
+        $extracted['custom'] = FormQuestion::flattenAnswers($extracted['custom']);
         $builtInKeys = FormQuestion::getBuiltInKeys()['keluh_kesah'];
         $data = array_merge(array_fill_keys($builtInKeys, null), $extracted['regular']);
 

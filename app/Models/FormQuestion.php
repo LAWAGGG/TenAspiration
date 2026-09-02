@@ -6,9 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class FormQuestion extends Model
 {
-    protected $fillable = ['form_type', 'entity_id', 'question_key', 'question_label', 'placeholder', 'is_required', 'order'];
+    protected $fillable = ['form_type', 'entity_id', 'question_key', 'question_label', 'question_type', 'question_options', 'placeholder', 'is_required', 'order'];
 
-    protected $casts = ['is_required' => 'boolean'];
+    protected $casts = [
+        'is_required' => 'boolean',
+        'question_options' => 'array',
+    ];
 
     public static function getBuiltInKeys(): array
     {
@@ -17,6 +20,27 @@ class FormQuestion extends Model
             'audiensi' => ['wakil kesiswaan', 'wakil sarpras', 'wakil kurikulum', 'wakil humas', 'tata usaha', 'OSIS', 'MPK', 'Ekskul', 'umum'],
             'keluh_kesah' => ['keluh_kesah', 'phone_number'],
         ];
+    }
+
+    public static function getQuestionTypes(): array
+    {
+        return [
+            'essay' => 'Essay (Uraian)',
+            'pilihan_ganda' => 'Pilihan Ganda',
+            'checkbox' => 'Checkbox (Multiple Choice)',
+        ];
+    }
+
+    public static function getDefaultOptions(string $type): ?array
+    {
+        if ($type === 'pilihan_ganda') {
+            return ['options' => ['', '', ''], 'correct_answer' => null];
+        }
+        if ($type === 'checkbox') {
+            return ['options' => ['', '', ''], 'correct_answers' => []];
+        }
+
+        return null;
     }
 
     public static function getDefaults(): array
@@ -78,6 +102,8 @@ class FormQuestion extends Model
                 'question_key' => $q['key'],
                 'question_label' => $q['label'],
                 'placeholder' => $q['placeholder'],
+                'question_type' => 'essay',
+                'question_options' => null,
                 'is_required' => $q['required'],
                 'order' => $index,
             ];
@@ -118,5 +144,22 @@ class FormQuestion extends Model
         }
 
         return ['regular' => $regular, 'custom' => $custom];
+    }
+
+    /**
+     * Jawaban checkbox tiba sebagai array. Kolom jawaban (baik kolom string
+     * built-in maupun custom_answers) disimpan sebagai string, jadi array
+     * digabung menjadi satu baris teks agar tidak crash saat insert.
+     */
+    public static function flattenAnswers(array $answers): array
+    {
+        foreach ($answers as $key => $value) {
+            if (is_array($value)) {
+                $parts = array_values(array_filter($value, fn ($v) => $v !== null && $v !== ''));
+                $answers[$key] = implode(', ', $parts);
+            }
+        }
+
+        return $answers;
     }
 }

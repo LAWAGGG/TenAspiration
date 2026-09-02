@@ -14,6 +14,8 @@ class FormQuestionController extends Controller
             'questions' => 'required|array',
             'questions.*.question_key' => 'required|string',
             'questions.*.question_label' => 'required|string',
+            'questions.*.question_type' => 'required|in:essay,pilihan_ganda,checkbox',
+            'questions.*.question_options' => 'nullable|json',
             'questions.*.placeholder' => 'nullable|string',
             'questions.*.is_required' => 'nullable|in:0,1,true,false',
         ]);
@@ -32,6 +34,8 @@ class FormQuestionController extends Controller
                     'entity_id' => $entityId,
                     'question_key' => $key,
                     'question_label' => $question['question_label'],
+                    'question_type' => $question['question_type'] ?? 'essay',
+                    'question_options' => $question['question_options'] ?? null,
                     'placeholder' => $question['placeholder'] ?? null,
                     'is_required' => filter_var($question['is_required'] ?? false, FILTER_VALIDATE_BOOLEAN),
                 ]);
@@ -49,6 +53,8 @@ class FormQuestionController extends Controller
                 'entity_id' => null,
                 'question_key' => $key,
                 'question_label' => $question['question_label'],
+                'question_type' => $question['question_type'] ?? 'essay',
+                'question_options' => $question['question_options'] ?? null,
                 'placeholder' => $question['placeholder'] ?? null,
                 'is_required' => filter_var($question['is_required'] ?? false, FILTER_VALIDATE_BOOLEAN),
                 'order' => $index,

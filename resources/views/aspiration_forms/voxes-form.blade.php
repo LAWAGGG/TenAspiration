@@ -44,7 +44,20 @@
             showModal: @if (session('success')) true @else false @endif,
             hint: false,
             isLoading: false,
-            questions: {{ json_encode($questions) }}
+            questions: {{ json_encode($questions) }}.map(function(q) {
+                if (q.question_options && typeof q.question_options === 'string') {
+                    try { q = { ...q, question_options: JSON.parse(q.question_options) }; } catch(e) {}
+                }
+                return q;
+            }),
+            checkCheckbox(el, savedValues, value) {
+                const vals = Array.isArray(savedValues) ? savedValues : (savedValues ? [savedValues] : []);
+                el.checked = vals.includes(value);
+            },
+            getOptions(q) {
+                const opts = (q.question_options?.options || []).filter(o => o && o.trim() !== '');
+                return opts;
+            }
         }">
 
         <div class="absolute -top-20 -right-20 w-40 h-40 rounded-full bg-red-100 opacity-30"></div>
@@ -99,10 +112,45 @@
                 <template x-for="(q, index) in questions" :key="q.question_key">
                     <div class="mb-4">
                         <label class="text-sm font-medium text-gray-700 mb-2 block" x-text="q.question_label"></label>
-                        <textarea :name="'messages[' + q.question_key + ']'" :placeholder="q.placeholder"
-                            rows="3" x-init="$el.value = oldMessages[q.question_key] ?? ''"
-                            class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-300 focus:border-red-300 transition"
-                            :required="q.is_required"></textarea>
+                        
+                        <!-- Essay -->
+                        <template x-if="!q.question_type || q.question_type === 'essay'">
+                            <div>
+                                <textarea :name="'messages[' + q.question_key + ']'" :placeholder="q.placeholder"
+                                    rows="3" x-init="$el.value = oldMessages[q.question_key] ?? ''"
+                                    class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-300 focus:border-red-300 transition"
+                                    :required="q.is_required"></textarea>
+                            </div>
+                        </template>
+                        
+                        <!-- Pilihan Ganda -->
+                        <template x-if="q.question_type === 'pilihan_ganda'">
+                            <div class="space-y-2">
+                                <template x-for="(opt, optIdx) in getOptions(q)" :key="optIdx">
+                                    <div class="flex items-center gap-2 p-2 rounded-lg border border-gray-100 hover:bg-red-50 transition-colors">
+                                        <input type="radio" :id="'pg_' + index + '_' + optIdx" :name="'messages[' + q.question_key + ']'" :value="opt"
+                                            x-init="$el.checked = oldMessages[q.question_key] === opt"
+                                            :required="q.is_required"
+                                            class="h-4 w-4 border-gray-300 text-red-600 focus:ring-red-500 cursor-pointer">
+                                        <label :for="'pg_' + index + '_' + optIdx" class="text-sm text-gray-700 cursor-pointer flex-1" x-text="opt"></label>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                        
+                        <!-- Checkbox -->
+                        <template x-if="q.question_type === 'checkbox'">
+                            <div class="space-y-2">
+                                <template x-for="(opt, optIdx) in getOptions(q)" :key="optIdx">
+                                    <div class="flex items-center gap-2 p-2 rounded-lg border border-gray-100 hover:bg-red-50 transition-colors">
+                                        <input type="checkbox" :id="'chk_' + index + '_' + optIdx" :name="'messages[' + q.question_key + '][]'" :value="opt"
+                                            x-init="checkCheckbox($el, oldMessages[q.question_key], opt)"
+                                            class="h-4 w-4 rounded border-gray-300 text-red-600 focus:ring-red-500 cursor-pointer">
+                                        <label :for="'chk_' + index + '_' + optIdx" class="text-sm text-gray-700 cursor-pointer flex-1" x-text="opt"></label>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
                     </div>
                 </template>
 
