@@ -10,15 +10,47 @@ class FormQuestionController extends Controller
 {
     public function update(Request $request, string $formType, ?int $entityId = null)
     {
+        abort_unless(in_array($formType, ['event', 'audiensi', 'keluh_kesah']), 404);
+
         $validated = $request->validate([
-            'questions' => 'required|array',
-            'questions.*.question_key' => 'required|string',
-            'questions.*.question_label' => 'required|string',
+            'questions' => 'required|array|max:20',
+            'questions.*.question_key' => ['required', 'string', 'max:100', 'regex:/^[a-zA-Z0-9_]+$/'],
+            'questions.*.question_label' => 'required|string|max:150',
             'questions.*.question_type' => 'required|in:essay,pilihan_ganda,checkbox',
             'questions.*.question_options' => 'nullable|json',
-            'questions.*.placeholder' => 'nullable|string',
+            'questions.*.placeholder' => 'nullable|string|max:255',
             'questions.*.is_required' => 'nullable|in:0,1,true,false',
         ]);
+
+        // ponytail: structural guard for question_options — prevents DoS / stored junk
+        foreach ($validated['questions'] as $idx => $q) {
+            $type = $q['question_type'] ?? 'essay';
+            if ($type !== 'essay') {
+                $decoded = json_decode($q['question_options'] ?? '{}', true);
+                if (!is_array($decoded) || !isset($decoded['options']) || !is_array($decoded['options'])) {
+                    return back()->withErrors(['questions' => 'Opsi pertanyaan '.($idx+1).' tidak valid'])->withInput();
+                }
+                $filtered = array_values(array_filter($decoded['options'], fn($v) => is_string($v) && trim($v) !== ''));
+                if (count($filtered) < 2 || count($filtered) > 10) {
+                    return back()->withErrors(['questions' => 'Opsi pertanyaan '.($idx+1).' harus 2-10 opsi terisi'])->withInput();
+                }
+                foreach ($filtered as $opt) {
+                    if (mb_strlen($opt) > 100) {
+                        return back()->withErrors(['questions' => 'Opsi pertanyaan '.($idx+1).' maksimal 100 karakter'])->withInput();
+                    }
+                }
+                if (count($filtered) !== count(array_unique($filtered))) {
+                    return back()->withErrors(['questions' => 'Opsi pertanyaan '.($idx+1).' tidak boleh duplikat'])->withInput();
+                }
+                if (isset($decoded['allow_other']) && !is_bool($decoded['allow_other'])) {
+                    return back()->withErrors(['questions' => 'Opsi Lainnya pertanyaan '.($idx+1).' tidak valid'])->withInput();
+                }
+                // reserve sentinel __other__ — tidak boleh dipakai sebagai opsi biasa
+                if (in_array('__other__', $filtered, true)) {
+                    return back()->withErrors(['questions' => 'Opsi tidak boleh bernama __other__'])->withInput();
+                }
+            }
+        }
 
         if ($formType === 'event') {
             if (! $entityId) {
@@ -38,6 +70,7 @@ class FormQuestionController extends Controller
                     'question_options' => $question['question_options'] ?? null,
                     'placeholder' => $question['placeholder'] ?? null,
                     'is_required' => filter_var($question['is_required'] ?? false, FILTER_VALIDATE_BOOLEAN),
+                    'order' => $index,
                 ]);
             }
 
@@ -101,6 +134,7 @@ class FormQuestionController extends Controller
 
     public function reset(string $formType, ?int $entityId = null)
     {
+        abort_unless(in_array($formType, ['event', 'audiensi', 'keluh_kesah']), 404);
         FormQuestion::resetToDefault($formType, $entityId);
 
         if ($formType === 'event' && $entityId) {

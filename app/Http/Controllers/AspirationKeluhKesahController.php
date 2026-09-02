@@ -8,6 +8,7 @@ use App\Models\TargetEmail;
 use App\Notifications\KeluhKesahNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Validation\Rule;
 
 class AspirationKeluhKesahController extends Controller
 {
@@ -64,21 +65,72 @@ class AspirationKeluhKesahController extends Controller
             $key = $q['question_key'];
             $type = $q['question_type'] ?? 'essay';
             $required = $q['is_required'] ?? true;
+            $raw = $q['question_options'];
+            if (is_string($raw)) $raw = json_decode($raw, true);
+            $allowed = [];
+            if (is_array($raw) && isset($raw['options']) && is_array($raw['options'])) {
+                $allowed = array_values(array_filter($raw['options'], fn($v) => is_string($v) && trim($v) !== ''));
+            }
+            $allowOther = !empty($raw['allow_other']);
             if ($key === 'phone_number') {
-                $rules[$key] = 'nullable|string|digits_between:8,15';
+                $rules[$key] = 'nullable|string|digits_between:8,15|max:15';
             } elseif ($type === 'checkbox') {
-                $rules[$key] = $required ? 'required|array|min:1' : 'nullable|array';
-                $rules[$key . '.*'] = 'string';
+                if ($allowOther) {
+                    $allowedWithOther = array_merge($allowed, ['__other__']);
+                    $rules[$key] = $required ? 'required|array|min:1|max:10' : 'nullable|array|max:10';
+                    $rules[$key . '.*'] = ['string', 'max:5000', Rule::in($allowedWithOther)];
+                    $rules[$key . '_other'] = 'nullable|string|max:200';
+                } else {
+                    $rules[$key] = $required ? 'required|array|min:1|max:10' : 'nullable|array|max:10';
+                    $rules[$key . '.*'] = $allowed ? ['string', 'max:5000', Rule::in($allowed)] : 'string|max:5000';
+                }
+            } elseif ($type === 'pilihan_ganda') {
+                if ($allowOther) {
+                    $allowedWithOther = array_merge($allowed, ['__other__']);
+                    $base = $required ? 'required|string|max:5000' : 'nullable|string|max:5000';
+                    $rules[$key] = [$base, Rule::in($allowedWithOther)];
+                    $rules[$key . '_other'] = 'nullable|string|max:200';
+                } else {
+                    $base = $required ? 'required|string|max:5000' : 'nullable|string|max:5000';
+                    $rules[$key] = $allowed ? [$base, Rule::in($allowed)] : $base;
+                }
             } elseif ($required) {
-                $rules[$key] = 'required|string';
+                $rules[$key] = 'required|string|max:5000';
             } else {
-                $rules[$key] = 'nullable|string';
+                $rules[$key] = 'nullable|string|max:5000';
             }
         }
 
         $request->validate($rules);
 
-        $extracted = FormQuestion::extractAnswers('keluh_kesah', $request->all());
+        // ponytail: Lainnya transform
+        $input = $request->all();
+        foreach ($questions as $q) {
+            $key = $q['question_key'];
+            $type = $q['question_type'] ?? 'essay';
+            $raw = $q['question_options'];
+            if (is_string($raw)) $raw = json_decode($raw, true);
+            if (empty($raw['allow_other'])) continue;
+            if ($type === 'pilihan_ganda' && isset($input[$key]) && $input[$key] === '__other__') {
+                $otherText = trim((string)($request->input($key . '_other') ?? ''));
+                if ($otherText === '') {
+                    return back()->withErrors([$key => 'Isi Lainnya untuk '.$q['question_label'].' wajib diisi'])->withInput();
+                }
+                $request->merge([$key => $otherText]);
+                $input[$key] = $otherText;
+            } elseif ($type === 'checkbox' && isset($input[$key]) && is_array($input[$key]) && in_array('__other__', $input[$key], true)) {
+                $otherText = trim((string)($request->input($key . '_other') ?? ''));
+                if ($otherText === '') {
+                    return back()->withErrors([$key => 'Isi Lainnya untuk '.$q['question_label'].' wajib diisi'])->withInput();
+                }
+                $replaced = array_map(fn($v) => $v === '__other__' ? $otherText : $v, $input[$key]);
+                $request->merge([$key => $replaced]);
+                $input[$key] = $replaced;
+            }
+        }
+        $inputFiltered = array_filter($input, fn($k) => !str_ends_with($k, '_other'), ARRAY_FILTER_USE_KEY);
+
+        $extracted = FormQuestion::extractAnswers('keluh_kesah', $inputFiltered);
         $extracted['regular'] = FormQuestion::flattenAnswers($extracted['regular']);
         $extracted['custom'] = FormQuestion::flattenAnswers($extracted['custom']);
         $builtInKeys = FormQuestion::getBuiltInKeys()['keluh_kesah'];

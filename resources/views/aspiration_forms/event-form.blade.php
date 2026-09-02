@@ -276,14 +276,34 @@
                         
                         <!-- Pilihan Ganda -->
                         <template x-if="q.question_type === 'pilihan_ganda'">
-                            <div class="space-y-2">
+                            <div class="space-y-2" x-init="pgOtherChecked[index] = isOtherChecked(q, index)">
                                 <template x-for="(opt, optIdx) in getOptions(q)" :key="optIdx">
                                     <div class="flex items-center gap-2 p-2 rounded-lg border border-gray-100 hover:bg-blue-50 transition-colors">
                                         <input type="radio" :id="'pg_' + index + '_' + optIdx" :name="q.question_key" :value="opt"
                                             x-init="$el.checked = oldInput[q.question_key] === opt"
+                                            @change="pgOtherChecked[index]=false"
                                             :required="q.is_required"
                                             class="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
                                         <label :for="'pg_' + index + '_' + optIdx" class="text-sm text-gray-700 cursor-pointer flex-1" x-text="opt"></label>
+                                    </div>
+                                </template>
+                                <template x-if="allowOther(q)">
+                                    <div class="p-2 rounded-lg border transition-colors" :class="pgOtherChecked[index] ? 'border-blue-300 bg-blue-50 shadow-sm' : 'border-gray-100 hover:bg-blue-50'" x-init="pgOtherChecked[index] = isOtherChecked(q, index)">
+                                        <div class="flex items-center gap-2">
+                                            <input type="radio" :id="'pg_other_' + index" :name="q.question_key" value="__other__"
+                                                x-init="$el.checked = isOtherChecked(q, index)"
+                                                @change="pgOtherChecked[index]=true; $nextTick(()=> $refs['pg_other_'+index]?.focus())"
+                                                :required="q.is_required"
+                                                class="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
+                                            <label :for="'pg_other_' + index" class="text-sm font-medium text-gray-700 cursor-pointer">Lainnya</label>
+                                            <span class="ml-auto text-xs text-gray-400">isi sendiri</span>
+                                        </div>
+                                        <div x-show="pgOtherChecked[index]" x-transition class="mt-2">
+                                            <input type="text" :name="q.question_key + '_other'" :value="otherValue(q)"
+                                                :ref="'pg_other_'+index"
+                                                placeholder="Tulis jawaban lainnya..."
+                                                class="w-full border border-blue-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300 bg-white">
+                                        </div>
                                     </div>
                                 </template>
                             </div>
@@ -291,13 +311,31 @@
                         
                         <!-- Checkbox -->
                         <template x-if="q.question_type === 'checkbox'">
-                            <div class="space-y-2">
+                            <div class="space-y-2" x-init="chkOtherChecked[index] = isOtherChecked(q, index)">
                                 <template x-for="(opt, optIdx) in getOptions(q)" :key="optIdx">
                                     <div class="flex items-center gap-2 p-2 rounded-lg border border-gray-100 hover:bg-blue-50 transition-colors">
                                         <input type="checkbox" :id="'chk_' + index + '_' + optIdx" :name="q.question_key + '[]'" :value="opt"
                                             x-init="checkEventCheckbox($el, oldInput[q.question_key], opt)"
                                             class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
                                         <label :for="'chk_' + index + '_' + optIdx" class="text-sm text-gray-700 cursor-pointer flex-1" x-text="opt"></label>
+                                    </div>
+                                </template>
+                                <template x-if="allowOther(q)">
+                                    <div class="p-2 rounded-lg border transition-colors" :class="chkOtherChecked[index] ? 'border-blue-300 bg-blue-50 shadow-sm' : 'border-gray-100 hover:bg-blue-50'">
+                                        <div class="flex items-center gap-2">
+                                            <input type="checkbox" :id="'chk_other_' + index" :name="q.question_key + '[]'" value="__other__"
+                                                x-init="$el.checked = isOtherChecked(q, index)"
+                                                @change="chkOtherChecked[index] = $el.checked; if($el.checked) $nextTick(()=> $refs['chk_other_'+index]?.focus())"
+                                                class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
+                                            <label :for="'chk_other_' + index" class="text-sm font-medium text-gray-700 cursor-pointer">Lainnya</label>
+                                            <span class="ml-auto text-xs text-gray-400">isi sendiri</span>
+                                        </div>
+                                        <div x-show="chkOtherChecked[index]" x-transition class="mt-2">
+                                            <input type="text" :name="q.question_key + '_other'" :value="otherValue(q)"
+                                                :ref="'chk_other_'+index"
+                                                placeholder="Tulis jawaban lainnya..."
+                                                class="w-full border border-blue-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300 bg-white">
+                                        </div>
                                     </div>
                                 </template>
                             </div>
@@ -435,6 +473,30 @@
                     getOptions(q) {
                         const opts = (q.question_options?.options || []).filter(o => o && o.trim() !== '');
                         return opts;
+                    },
+
+                    allowOther(q) { return !!q.question_options?.allow_other; },
+                    pgOtherChecked: {},
+                    chkOtherChecked: {},
+                    isOtherChecked(q, index) {
+                        const val = this.oldInput[q.question_key];
+                        const otherVal = this.oldInput[q.question_key + '_other'];
+                        if (val === '__other__') return true;
+                        if (Array.isArray(val) && val.includes('__other__')) return true;
+                        if (otherVal) return true;
+                        if (typeof val === 'string' && val && !this.getOptions(q).includes(val) && this.allowOther(q)) return true;
+                        if (Array.isArray(val) && val.some(v => !this.getOptions(q).includes(v) && v)) return true;
+                        return false;
+                    },
+                    otherValue(q) {
+                        if (this.oldInput[q.question_key + '_other']) return this.oldInput[q.question_key + '_other'];
+                        const val = this.oldInput[q.question_key];
+                        if (typeof val === 'string' && val && !this.getOptions(q).includes(val)) return val;
+                        if (Array.isArray(val)) {
+                            const custom = val.find(v => !this.getOptions(q).includes(v));
+                            if (custom && custom !== '__other__') return custom;
+                        }
+                        return '';
                     }
                 };
             });

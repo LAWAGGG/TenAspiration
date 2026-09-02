@@ -77,12 +77,16 @@
                         $qType = $question['question_type'] ?? 'essay';
                         $rawOptions = $question['question_options'];
                         $opts = [];
+                        $allowOther = false;
                         if (is_string($rawOptions)) {
                             $decoded = json_decode($rawOptions, true);
                             $opts = $decoded['options'] ?? [];
+                            $allowOther = !empty($decoded['allow_other']);
                         } elseif (is_array($rawOptions)) {
                             $opts = $rawOptions['options'] ?? [];
+                            $allowOther = !empty($rawOptions['allow_other']);
                         }
+                        $opts = array_values(array_filter($opts, fn($v) => is_string($v) && trim($v) !== ''));
                     @endphp
                     
                     @if ($qType === 'essay')
@@ -97,21 +101,52 @@
                     @endif
                     
                     @elseif ($qType === 'pilihan_ganda')
-                    <div class="space-y-2">
+                    @php
+                        $oldValPG = old($question['question_key']);
+                        $oldOtherPG = old($question['question_key'].'_other');
+                        $initialOtherPG = ($oldValPG === '__other__' || !empty($oldOtherPG) || ($oldValPG && !in_array($oldValPG, $opts) && $allowOther));
+                    @endphp
+                    <div class="space-y-2" x-data="{ otherOn: {{ $initialOtherPG ? 'true' : 'false' }} }">
                         @foreach ($opts as $optIdx => $opt)
                         <div class="flex items-center gap-2 p-2 rounded-lg border border-gray-100 hover:bg-red-50 transition-colors">
                             <input type="radio" name="{{ $question['question_key'] }}" value="{{ $opt }}"
                                 {{ (old($question['question_key']) === $opt) ? 'checked' : '' }}
+                                @change="otherOn = false"
                                 {{ $question['is_required'] ? 'required' : '' }}
                                 class="h-4 w-4 border-gray-300 text-red-600 focus:ring-red-500 cursor-pointer">
                             <span class="text-sm text-gray-700">{{ $opt }}</span>
                         </div>
                         @endforeach
+                        @if($allowOther)
+                        <div class="p-2 rounded-lg border transition-colors" :class="otherOn ? 'border-red-300 bg-red-50 shadow-sm' : 'border-gray-100 hover:bg-red-50'">
+                            <div class="flex items-center gap-2">
+                                <input type="radio" name="{{ $question['question_key'] }}" value="__other__"
+                                    {{ $initialOtherPG ? 'checked' : '' }}
+                                    @change="otherOn = true"
+                                    {{ $question['is_required'] ? 'required' : '' }}
+                                    class="h-4 w-4 border-gray-300 text-red-600 focus:ring-red-500 cursor-pointer">
+                                <span class="text-sm font-medium text-gray-700">Lainnya</span>
+                                <span class="ml-auto text-xs text-gray-400">isi sendiri</span>
+                            </div>
+                            <div x-show="otherOn" x-transition class="mt-2">
+                                <input type="text" name="{{ $question['question_key'] }}_other" value="{{ $oldOtherPG ?? ($initialOtherPG && $oldValPG && !in_array($oldValPG, $opts) ? $oldValPG : '') }}"
+                                    placeholder="Tulis jawaban lainnya..."
+                                    class="w-full border border-red-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-300 focus:border-red-300 bg-white">
+                            </div>
+                        </div>
+                        @endif
                     </div>
                     
                     @elseif ($qType === 'checkbox')
-                    <div class="space-y-2">
-                        @php $oldVals = is_array(old($question['question_key'])) ? old($question['question_key']) : []; @endphp
+                    @php
+                        $oldVals = is_array(old($question['question_key'])) ? old($question['question_key']) : [];
+                        $oldOtherChk = old($question['question_key'].'_other');
+                        $initialOtherChk = in_array('__other__', $oldVals) || !empty($oldOtherChk);
+                        if (!$initialOtherChk && $allowOther) {
+                            foreach ($oldVals as $ov) { if (!in_array($ov, $opts) && $ov !== '__other__') { $initialOtherChk = true; break; } }
+                        }
+                    @endphp
+                    <div class="space-y-2" x-data="{ otherOn: {{ $initialOtherChk ? 'true' : 'false' }} }">
                         @foreach ($opts as $optIdx => $opt)
                         <div class="flex items-center gap-2 p-2 rounded-lg border border-gray-100 hover:bg-red-50 transition-colors">
                             <input type="checkbox" name="{{ $question['question_key'] }}[]" value="{{ $opt }}"
@@ -120,6 +155,29 @@
                             <span class="text-sm text-gray-700">{{ $opt }}</span>
                         </div>
                         @endforeach
+                        @if($allowOther)
+                        <div class="p-2 rounded-lg border transition-colors" :class="otherOn ? 'border-red-300 bg-red-50 shadow-sm' : 'border-gray-100 hover:bg-red-50'">
+                            <div class="flex items-center gap-2">
+                                <input type="checkbox" name="{{ $question['question_key'] }}[]" value="__other__"
+                                    {{ $initialOtherChk ? 'checked' : '' }}
+                                    @change="otherOn = $el.checked"
+                                    class="h-4 w-4 rounded border-gray-300 text-red-600 focus:ring-red-500 cursor-pointer">
+                                <span class="text-sm font-medium text-gray-700">Lainnya</span>
+                                <span class="ml-auto text-xs text-gray-400">isi sendiri</span>
+                            </div>
+                            <div x-show="otherOn" x-transition class="mt-2">
+                                @php
+                                    $otherValChk = $oldOtherChk;
+                                    if (!$otherValChk) {
+                                        foreach ($oldVals as $ov) { if (!in_array($ov, $opts) && $ov !== '__other__') { $otherValChk = $ov; break; } }
+                                    }
+                                @endphp
+                                <input type="text" name="{{ $question['question_key'] }}_other" value="{{ $otherValChk }}"
+                                    placeholder="Tulis jawaban lainnya..."
+                                    class="w-full border border-red-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-300 focus:border-red-300 bg-white">
+                            </div>
+                        </div>
+                        @endif
                     </div>
                     @endif
                 </div>

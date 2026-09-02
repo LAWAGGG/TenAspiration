@@ -31,11 +31,24 @@ class AuthController extends Controller
             return back()->with('error', 'Nama atau password salah.');
         }
 
-        if (Auth::user()->role == "admin") {
+        $role = Auth::user()->role;
+
+        if ($role === 'admin') {
             return redirect()->route('dashboard')->with('success', 'Login berhasil!');
-        } elseif (Auth::user()->role == "wakil") {
+        }
+
+        if ($role === 'wakil') {
+            // wakil tetap boleh kelola keluh kesah, tapi tidak boleh dashboard — lempar ke keluh kesah
+            // jika ingin wakil juga fallback, ganti ke redirect('/fallback')
             return redirect()->route('aspiration_keluhkesah.index')->with('success', 'Login berhasil!');
         }
+
+        // ponytail: role lain langsung lempar ke fallback — tidak boleh masuk dashboard
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('fallback')->with('error', 'Akses ditolak — hanya admin yang bisa login ke dashboard.');
     }
 
     // Proses logout

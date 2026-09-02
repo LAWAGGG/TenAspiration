@@ -547,6 +547,12 @@
                                             </template>
                                             <p class="text-xs text-gray-400 mt-1">Centang checkbox untuk tandai jawaban benar (bisa lebih dari satu)</p>
                                         </div>
+                                        <div x-show="q.question_type === 'pilihan_ganda' || q.question_type === 'checkbox'" class="flex items-center gap-2 p-2 rounded-lg bg-purple-50 border border-purple-200">
+                                            <input type="checkbox" x-model="q.question_options.allow_other"
+                                                class="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500">
+                                            <label class="text-xs font-medium text-gray-700">Izinkan Lainnya</label>
+                                            <span class="text-xs text-gray-500">— tampilkan opsi Lainnya + input teks</span>
+                                        </div>
                                         <div>
                                             <label class="block text-xs font-medium text-gray-600 mb-1">Placeholder</label>
                                             <input type="text" x-model="q.placeholder" :name="'questions[' + index + '][placeholder]'"

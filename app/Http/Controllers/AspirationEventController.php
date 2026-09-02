@@ -6,6 +6,7 @@ use App\Models\AspirationEvent;
 use App\Models\Event;
 use App\Models\FormQuestion;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class AspirationEventController extends Controller
 {
@@ -19,19 +20,71 @@ class AspirationEventController extends Controller
             $key = $q['question_key'];
             $type = $q['question_type'] ?? 'essay';
             $required = $q['is_required'] ?? true;
+            $raw = $q['question_options'];
+            if (is_string($raw)) $raw = json_decode($raw, true);
+            $allowed = [];
+            if (is_array($raw) && isset($raw['options']) && is_array($raw['options'])) {
+                $allowed = array_values(array_filter($raw['options'], fn($v) => is_string($v) && trim($v) !== ''));
+            }
+            $allowOther = !empty($raw['allow_other']);
             if ($type === 'checkbox') {
-                $rules[$key] = $required ? 'required|array|min:1' : 'nullable|array';
-                $rules[$key . '.*'] = 'string';
+                if ($allowOther) {
+                    $allowedWithOther = array_merge($allowed, ['__other__']);
+                    $rules[$key] = $required ? 'required|array|min:1|max:10' : 'nullable|array|max:10';
+                    $rules[$key . '.*'] = ['string', 'max:5000', Rule::in($allowedWithOther)];
+                    $rules[$key . '_other'] = 'nullable|string|max:200';
+                } else {
+                    $rules[$key] = $required ? 'required|array|min:1|max:10' : 'nullable|array|max:10';
+                    $rules[$key . '.*'] = $allowed ? ['string', 'max:5000', Rule::in($allowed)] : 'string|max:5000';
+                }
+            } elseif ($type === 'pilihan_ganda') {
+                if ($allowOther) {
+                    $allowedWithOther = array_merge($allowed, ['__other__']);
+                    $base = $required ? 'required|string|max:5000' : 'nullable|string|max:5000';
+                    $rules[$key] = [$base, Rule::in($allowedWithOther)];
+                    $rules[$key . '_other'] = 'nullable|string|max:200';
+                } else {
+                    $base = $required ? 'required|string|max:5000' : 'nullable|string|max:5000';
+                    $rules[$key] = $allowed ? [$base, Rule::in($allowed)] : $base;
+                }
             } elseif ($required) {
-                $rules[$key] = 'required|string';
+                $rules[$key] = 'required|string|max:5000';
             } else {
-                $rules[$key] = 'nullable|string';
+                $rules[$key] = 'nullable|string|max:5000';
             }
         }
 
         $request->validate($rules);
 
-        $extracted = FormQuestion::extractAnswers('event', $request->except(['event_id']));
+        // ponytail: Lainnya transform — ganti __other__ dengan teks bebas
+        $input = $request->except(['event_id']);
+        foreach ($questions as $q) {
+            $key = $q['question_key'];
+            $type = $q['question_type'] ?? 'essay';
+            $raw = $q['question_options'];
+            if (is_string($raw)) $raw = json_decode($raw, true);
+            if (empty($raw['allow_other'])) continue;
+            if ($type === 'pilihan_ganda' && isset($input[$key]) && $input[$key] === '__other__') {
+                $otherText = trim((string)($request->input($key . '_other') ?? ''));
+                if ($otherText === '') {
+                    return back()->withErrors([$key => 'Isi Lainnya untuk '.$q['question_label'].' wajib diisi'])->withInput();
+                }
+                $request->merge([$key => $otherText]);
+                $input[$key] = $otherText;
+            } elseif ($type === 'checkbox' && isset($input[$key]) && is_array($input[$key]) && in_array('__other__', $input[$key], true)) {
+                $otherText = trim((string)($request->input($key . '_other') ?? ''));
+                if ($otherText === '') {
+                    return back()->withErrors([$key => 'Isi Lainnya untuk '.$q['question_label'].' wajib diisi'])->withInput();
+                }
+                $replaced = array_map(fn($v) => $v === '__other__' ? $otherText : $v, $input[$key]);
+                $request->merge([$key => $replaced]);
+                $input[$key] = $replaced;
+            }
+        }
+        // ponytail: jangan simpan _other fields ke DB
+        $inputFiltered = array_filter($input, fn($k) => !str_ends_with($k, '_other'), ARRAY_FILTER_USE_KEY);
+
+        $extracted = FormQuestion::extractAnswers('event', $inputFiltered);
         $extracted['regular'] = FormQuestion::flattenAnswers($extracted['regular']);
         $extracted['custom'] = FormQuestion::flattenAnswers($extracted['custom']);
         $builtInKeys = FormQuestion::getBuiltInKeys()['event'];
@@ -70,19 +123,70 @@ class AspirationEventController extends Controller
             $key = $q['question_key'];
             $type = $q['question_type'] ?? 'essay';
             $required = $q['is_required'] ?? true;
+            $raw = $q['question_options'];
+            if (is_string($raw)) $raw = json_decode($raw, true);
+            $allowed = [];
+            if (is_array($raw) && isset($raw['options']) && is_array($raw['options'])) {
+                $allowed = array_values(array_filter($raw['options'], fn($v) => is_string($v) && trim($v) !== ''));
+            }
+            $allowOther = !empty($raw['allow_other']);
             if ($type === 'checkbox') {
-                $rules[$key] = $required ? 'required|array|min:1' : 'nullable|array';
-                $rules[$key . '.*'] = 'string';
+                if ($allowOther) {
+                    $allowedWithOther = array_merge($allowed, ['__other__']);
+                    $rules[$key] = $required ? 'required|array|min:1|max:10' : 'nullable|array|max:10';
+                    $rules[$key . '.*'] = ['string', 'max:5000', Rule::in($allowedWithOther)];
+                    $rules[$key . '_other'] = 'nullable|string|max:200';
+                } else {
+                    $rules[$key] = $required ? 'required|array|min:1|max:10' : 'nullable|array|max:10';
+                    $rules[$key . '.*'] = $allowed ? ['string', 'max:5000', Rule::in($allowed)] : 'string|max:5000';
+                }
+            } elseif ($type === 'pilihan_ganda') {
+                if ($allowOther) {
+                    $allowedWithOther = array_merge($allowed, ['__other__']);
+                    $base = $required ? 'required|string|max:5000' : 'nullable|string|max:5000';
+                    $rules[$key] = [$base, Rule::in($allowedWithOther)];
+                    $rules[$key . '_other'] = 'nullable|string|max:200';
+                } else {
+                    $base = $required ? 'required|string|max:5000' : 'nullable|string|max:5000';
+                    $rules[$key] = $allowed ? [$base, Rule::in($allowed)] : $base;
+                }
             } elseif ($required) {
-                $rules[$key] = 'required|string';
+                $rules[$key] = 'required|string|max:5000';
             } else {
-                $rules[$key] = 'nullable|string';
+                $rules[$key] = 'nullable|string|max:5000';
             }
         }
 
         $request->validate($rules);
 
-        $extracted = FormQuestion::extractAnswers('event', $request->except(['event_id']));
+        // ponytail: Lainnya transform for update
+        $input = $request->except(['event_id']);
+        foreach ($questions as $q) {
+            $key = $q['question_key'];
+            $type = $q['question_type'] ?? 'essay';
+            $raw = $q['question_options'];
+            if (is_string($raw)) $raw = json_decode($raw, true);
+            if (empty($raw['allow_other'])) continue;
+            if ($type === 'pilihan_ganda' && isset($input[$key]) && $input[$key] === '__other__') {
+                $otherText = trim((string)($request->input($key . '_other') ?? ''));
+                if ($otherText === '') {
+                    return back()->withErrors([$key => 'Isi Lainnya untuk '.$q['question_label'].' wajib diisi'])->withInput();
+                }
+                $request->merge([$key => $otherText]);
+                $input[$key] = $otherText;
+            } elseif ($type === 'checkbox' && isset($input[$key]) && is_array($input[$key]) && in_array('__other__', $input[$key], true)) {
+                $otherText = trim((string)($request->input($key . '_other') ?? ''));
+                if ($otherText === '') {
+                    return back()->withErrors([$key => 'Isi Lainnya untuk '.$q['question_label'].' wajib diisi'])->withInput();
+                }
+                $replaced = array_map(fn($v) => $v === '__other__' ? $otherText : $v, $input[$key]);
+                $request->merge([$key => $replaced]);
+                $input[$key] = $replaced;
+            }
+        }
+        $inputFiltered = array_filter($input, fn($k) => !str_ends_with($k, '_other'), ARRAY_FILTER_USE_KEY);
+
+        $extracted = FormQuestion::extractAnswers('event', $inputFiltered);
         $extracted['regular'] = FormQuestion::flattenAnswers($extracted['regular']);
         $extracted['custom'] = FormQuestion::flattenAnswers($extracted['custom']);
         $builtInKeys = FormQuestion::getBuiltInKeys()['event'];

@@ -6,6 +6,7 @@ use App\Models\Aspiration;
 use App\Models\FormQuestion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class AspirationController extends Controller
 {
@@ -68,27 +69,76 @@ class AspirationController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            "messages" => "required|array",
+            "messages" => "required|array|max:20",
             "kelas" => "required|in:X,XI,XII",
         ]);
 
         $questions = FormQuestion::getForForm('audiensi');
+        // ponytail: whitelist keys — cegah inject `to` sembarang via extra keys
+        $knownKeys = array_column($questions, 'question_key');
         $messageRules = [];
         foreach ($questions as $q) {
             $key = $q['question_key'];
             $type = $q['question_type'] ?? 'essay';
             $required = $q['is_required'] ?? true;
+            $raw = $q['question_options'];
+            if (is_string($raw)) $raw = json_decode($raw, true);
+            $allowed = [];
+            if (is_array($raw) && isset($raw['options']) && is_array($raw['options'])) {
+                $allowed = array_values(array_filter($raw['options'], fn($v) => is_string($v) && trim($v) !== ''));
+            }
+            $allowOther = !empty($raw['allow_other']);
 
             if ($type === 'checkbox') {
-                $messageRules["messages.$key"] = $required ? 'required|array|min:1' : 'nullable|array';
-                $messageRules["messages.$key.*"] = 'string';
+                if ($allowOther) {
+                    $allowedWithOther = array_merge($allowed, ['__other__']);
+                    $messageRules["messages.$key"] = $required ? 'required|array|min:1|max:10' : 'nullable|array|max:10';
+                    $messageRules["messages.$key.*"] = ['string', 'max:5000', Rule::in($allowedWithOther)];
+                    $messageRules["messages_other.$key"] = 'nullable|string|max:200';
+                } else {
+                    $messageRules["messages.$key"] = $required ? 'required|array|min:1|max:10' : 'nullable|array|max:10';
+                    $messageRules["messages.$key.*"] = $allowed ? ['string', 'max:5000', Rule::in($allowed)] : 'string|max:5000';
+                }
             } elseif ($type === 'pilihan_ganda') {
-                $messageRules["messages.$key"] = $required ? 'required|string' : 'nullable|string';
+                if ($allowOther) {
+                    $allowedWithOther = array_merge($allowed, ['__other__']);
+                    $base = $required ? 'required|string|max:5000' : 'nullable|string|max:5000';
+                    $messageRules["messages.$key"] = [$base, Rule::in($allowedWithOther)];
+                    $messageRules["messages_other.$key"] = 'nullable|string|max:200';
+                } else {
+                    $base = $required ? 'required|string|max:5000' : 'nullable|string|max:5000';
+                    $messageRules["messages.$key"] = $allowed ? [$base, Rule::in($allowed)] : $base;
+                }
             } else {
-                $messageRules["messages.$key"] = $required ? 'required|string' : 'nullable|string';
+                $messageRules["messages.$key"] = $required ? 'required|string|max:5000' : 'nullable|string|max:5000';
             }
         }
         $request->validate($messageRules);
+        // ponytail: Lainnya transform — ganti sentinel __other__ dengan teks bebas
+        $messagesOther = $request->input('messages_other', []);
+        $rawMessages = $request->input('messages', []);
+        foreach ($questions as $q) {
+            $key = $q['question_key'];
+            $type = $q['question_type'] ?? 'essay';
+            $raw = $q['question_options'];
+            if (is_string($raw)) $raw = json_decode($raw, true);
+            if (empty($raw['allow_other'])) continue;
+            if ($type === 'pilihan_ganda' && isset($rawMessages[$key]) && $rawMessages[$key] === '__other__') {
+                $otherText = trim((string)($messagesOther[$key] ?? ''));
+                if ($otherText === '') {
+                    return back()->withErrors(["messages.$key" => 'Isi Lainnya untuk '.$q['question_label'].' wajib diisi'])->withInput();
+                }
+                $rawMessages[$key] = $otherText;
+            } elseif ($type === 'checkbox' && isset($rawMessages[$key]) && is_array($rawMessages[$key]) && in_array('__other__', $rawMessages[$key], true)) {
+                $otherText = trim((string)($messagesOther[$key] ?? ''));
+                if ($otherText === '') {
+                    return back()->withErrors(["messages.$key" => 'Isi Lainnya untuk '.$q['question_label'].' wajib diisi'])->withInput();
+                }
+                $rawMessages[$key] = array_values(array_map(fn($v) => $v === '__other__' ? $otherText : $v, $rawMessages[$key]));
+            }
+        }
+        // filter to known keys only — extra keys diabaikan
+        $filteredMessages = array_intersect_key($rawMessages ?? [], array_flip($knownKeys));
 
         $badWords = [
             "anjing",
@@ -130,7 +180,7 @@ class AspirationController extends Controller
             "bacot"
         ];
 
-        foreach ($request->messages as $tujuan => $pesan) {
+        foreach ($filteredMessages as $tujuan => $pesan) {
             if (is_array($pesan)) {
                 $pesan = implode(', ', array_values(array_filter($pesan, fn ($v) => $v !== null && $v !== '')));
             }
@@ -155,8 +205,8 @@ class AspirationController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            "message" => "required",
-            "to" => "required",
+            "message" => "required|string|max:5000",
+            "to" => "required|string|max:100",
         ]);
 
         $aspiration = Aspiration::findOrFail($id);
